@@ -90,22 +90,6 @@ const OtherUser = ({ username, setUser, user }) => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [tableKey, setTableKey] = useState(0);
   const employeeId = user?.employeeId;
-  //   const getSocialMediaIcon = (type) => {
-  //     switch (type) {
-  //       case "Facebook":
-  //         return <FacebookOutlined />;
-  //       case "Instagram":
-  //         return <InstagramOutlined />;
-  //       case "LinkedIn":
-  //         return <LinkedinOutlined />;
-  //       case "YouTube":
-  //         return <YoutubeOutlined />;
-  //       case "X":
-  //         return <XOutlined />;
-  //       default:
-  //         return null;
-  //     }
-  //   };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -126,17 +110,6 @@ const OtherUser = ({ username, setUser, user }) => {
     }
   };
 
-  //   const handleLinkChange = (e) => {
-  //     if (e.target.value) {
-  //       const currentTime = dayjs().utcOffset(330).startOf("second");
-  //       console.log(
-  //         "Updated DateTime:",
-  //         currentTime.format("YYYY-MM-DD HH:mm:ss")
-  //       );
-  //       setLinkDateTime(currentTime);
-  //     }
-  //   };
-
   useEffect(() => {
     if (linkDateTime) {
       console.log(
@@ -151,16 +124,6 @@ const OtherUser = ({ username, setUser, user }) => {
     setUser(null);
     message.info(`See you soon ${username}. Take care!`);
   };
-
-  //   const handleWorkTypeChange = (value) => {
-  //     setWorkType(value);
-  //     form.setFieldsValue({
-  //       link: value === "Social Media" ? "" : undefined,
-  //       socialMediaType: value === "Social Media" ? "" : undefined,
-  //       startDateTime: value !== "Social Media" ? "" : undefined,
-  //       endDateTime: value !== "Social Media" ? "" : undefined,
-  //     });
-  //   };
 
   const fetchData = async () => {
     if (!user || !user.employeeId) {
@@ -213,7 +176,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
   const handleManualRefresh = () => {
     isManualRefresh.current = true;
-    setSelectedStatus(null); // Reset selection so all cards are visible
+    setSelectedStatus(null);
     setSearchText("");
     fetchData();
     setTableKey((prev) => prev + 1);
@@ -250,8 +213,8 @@ const OtherUser = ({ username, setUser, user }) => {
     }
 
     const formData = new URLSearchParams();
-    formData.append("action", "otherUserSubmit"); // ✅ Change action
-    formData.append("employeeId", user.employeeId); // ✅ Send employeeId
+    formData.append("action", "otherUserSubmit");
+    formData.append("employeeId", user.employeeId);
 
     formData.append("clientName", clientName);
     formData.append("link", link || "");
@@ -288,32 +251,6 @@ const OtherUser = ({ username, setUser, user }) => {
       setLoading(false);
     }
   };
-
-  //   const formattedData = tableData.map((item, index) => ({
-  //     key: index,
-  //     workType: item["Work Type"]?.trim(),
-  //     clientName: item["Client Name"]?.trim(),
-  //     startDateTime: item["Start Date & Time"]
-  //       ? dayjs(item["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-  //       : "-",
-  //     endDateTime: item[" End Date & Time"]
-  //       ? dayjs(item[" End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-  //       : "-",
-  //     duration:
-  //       item["Duration"] && item["Duration"] !== "1899-12-29T18:38:53.000Z"
-  //         ? item["Duration"]
-  //         : "-",
-  //     details: item["Details"]?.trim() || "-",
-  //     socialMediaType: item["Social Media Type"]?.trim() || "-",
-  //     link: item["Link"] || "N/A",
-  //     linkPostedDateTime: item["Link Posted Date & Time"]
-  //       ? dayjs(item["Link Posted Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-  //       : "-",
-  //     totalLinkCount: item["Total Link Count"] || "-",
-  //     status: item["Status"],
-  //     assigned: item["Assigned By"],
-  //     notes: item["Notes/Remarks"] || "-",
-  //   }));
 
   const formattedData = tableData.map((item, index) => {
     const cleanedItem = Object.keys(item).reduce((acc, key) => {
@@ -373,27 +310,6 @@ const OtherUser = ({ username, setUser, user }) => {
       setIsSearchActive(false); // ✅ Restore normal mode when search is cleared
     }
   };
-
-  //   const filteredData = formattedData.filter((item) => {
-  //     if (isSearchActive) {
-  //       return Object.values(item).some((value) => {
-  //         if (!value) return false;
-
-  //         const normalizedValue = value
-  //           .toString()
-  //           .toLowerCase()
-  //           .replace(/\s+/g, ""); // Remove spaces
-  //         const normalizedSearch = searchText.toLowerCase().replace(/\s+/g, ""); // Remove spaces
-
-  //         return normalizedValue.includes(normalizedSearch);
-  //       });
-  //     } else {
-  //       return (
-  //         !selectedStatus ||
-  //         item.status?.toLowerCase() === selectedStatus.toLowerCase()
-  //       );
-  //     }
-  //   });
 
   const filteredData = formattedData.filter((item) => {
     if (isSearchActive) {
@@ -920,24 +836,6 @@ const OtherUser = ({ username, setUser, user }) => {
             </div>
 
             <div className="d-flex align-items-center profile-container">
-              {/* <Avatar
-                size={48}
-                // src={Mithran}
-                icon={<UserOutlined />}
-                style={{ backgroundColor: "#1890ff", cursor: "pointer" }}
-                onMouseEnter={() => setShowLogout(true)}
-              />
-
-              {showLogout && (
-                <div
-                  className="logout-popup"
-                  onClick={handleLogout}
-                  onMouseLeave={() => setShowLogout(false)}
-                >
-                  <LogoutOutlined style={{ marginRight: "4px" }} />
-                  <span>Logout</span>
-                </div>
-              )} */}
               <Avatar
                 size={48}
                 style={{ backgroundColor: "#2f81c2", cursor: "pointer" }}
@@ -1371,7 +1269,6 @@ const OtherUser = ({ username, setUser, user }) => {
 
                 <Table
                   key={tableKey}
-                  // dataSource={filteredData}
                   dataSource={sortedData}
                   columns={columns}
                   rowKey={(record) => record.key}
@@ -1385,9 +1282,6 @@ const OtherUser = ({ username, setUser, user }) => {
                   bordered
                   loading={refreshing}
                   className="mt-2"
-                  // rowClassName={(record) =>
-                  //   record.status === "Completed" ? "bg-light" : ""
-                  // }
                 />
               </Card>
             </Col>

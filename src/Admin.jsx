@@ -1,253 +1,3 @@
-// import React, { useState, useEffect, useRef } from "react";
-// import { Layout, Row, Col, Card, Select, Table, Button, message } from "antd";
-// import { ReloadOutlined } from "@ant-design/icons";
-
-// const { Content } = Layout;
-
-// const Admin = ({ username, setUser, user}) => {
-//   const [employeeIds, setEmployeeIds] = useState([]);
-//   const [selectedEmployee, setSelectedEmployee] = useState("");
-//   const [tableData, setTableData] = useState([]);
-//   const [refreshing, setRefreshing] = useState(false);
-//   const isManualRefresh = useRef(false);
-//   const [tasks, setTasks] = useState([]);
-
-//   useEffect(() => {
-//     if (user) {
-//       fetchEmployeeIds();
-//     }
-//   }, [user]);
-
-// const fetchEmployeeIds = async () => {
-//   if (!user || !user.employeeId) {
-//     console.error("User not found or Employee ID is undefined. Please log in again.", user);
-//     return;
-//   }
-
-//   try {
-//     console.log("Fetching Employee IDs for:", user.employeeId); // Debugging
-
-//     const response = await fetch(
-//       `https://script.google.com/macros/s/AKfycby3uVtiSj9q_PtIXNFa8yirLj6SbzYvPoRZu4NUMCZSEfNvLI9mUBXVNjBvmU3bOknbTw/exec?function=getEmployeeIds&employeeId=${user.employeeId}`
-//     );
-
-//     const data = await response.json();
-//     console.log("Employee IDs Response:", data); // Debugging
-
-//     if (!data.success || !Array.isArray(data.data)) {
-//       console.error("Invalid response format:", data);
-//       setEmployeeIds([]); // Ensure it's an empty array
-//       return;
-//     }
-
-//     setEmployeeIds(data.data); // Set Employee IDs
-//   } catch (error) {
-//     console.error("Error fetching employee IDs:", error);
-//     setEmployeeIds([]); // Prevent crashes
-//   }
-// };
-
-//   useEffect(() => {
-//     fetchEmployeeIds();
-//   }, []);
-
-// //   const fetchEmployeeIds = async () => {
-// //     try {
-// //       const response = await fetch(
-// //         "https://script.google.com/macros/s/AKfycbyY1ePSgZLMlFo6EEUWtl32h2-r3THQKUvOihNv7qdgDcogTaefYY2hEcqnWM3Z4ziKRw/exec?function=getEmployeeIds"
-// //       );
-// //       const result = await response.json();
-// //       console.log(result);
-// //       if (result.success) {
-// //         setEmployeeIds(result.data);
-// //       } else {
-// //         message.error("Failed to fetch employee IDs.");
-// //       }
-// //     } catch (error) {
-// //       console.error("Error fetching employee IDs:", error);
-// //       message.error("Error fetching employee IDs.");
-// //     }
-// //   };
-
-//   const fetchReports = async (employeeId) => {
-//        if (!user || !user.employeeId) {
-//           message.error("User not found. Please log in again.");
-//           return;
-//         }
-//     setRefreshing(true);
-//     try {
-//       const response = await fetch(
-//         `https://script.google.com/macros/s/AKfycby3uVtiSj9q_PtIXNFa8yirLj6SbzYvPoRZu4NUMCZSEfNvLI9mUBXVNjBvmU3bOknbTw/exec?function=doOtherUserGet&employeeId=${employeeId}`
-//       );
-//       const result = await response.json();
-//       if (result.success) {
-//         setTableData(result.data);
-//       } else {
-//         message.warning("No reports found for this employee.");
-//         setTableData([]);
-//       }
-//     } catch (error) {
-//       console.error("Error fetching reports:", error);
-//       message.error("Failed to fetch reports.");
-//       setTableData([]);
-//     } finally {
-//       setRefreshing(false);
-//     }
-//   };
-
-//   const handleEmployeeChange = (value) => {
-//     setSelectedEmployee(value);
-//     fetchReports(value);
-//   };
-
-//   return (
-//     <Layout className="min-vh-100">
-//       <Content className="container mt-5 pt-4">
-//         <Row gutter={[24, 24]}>
-//           {/* Employee ID Dropdown */}
-//           <Col xs={24} md={12}>
-//             <Card title="Select Employee" className="card-shadow">
-//               <Select
-//                 placeholder="Select an Employee"
-//                 style={{ width: "100%" }}
-//                 onChange={handleEmployeeChange}
-//               >
-//                 {employeeIds.map((id) => (
-//                   <Select.Option key={id} value={id}>
-//                     {id}
-//                   </Select.Option>
-//                 ))}
-//               </Select>
-//             </Card>
-//           </Col>
-//           {/* Refresh Button */}
-//           <Col xs={24} md={12} className="text-right">
-//             <Button
-//               type="primary"
-//               icon={<ReloadOutlined />}
-//               loading={refreshing}
-//               onClick={() => fetchReports(selectedEmployee)}
-//               disabled={!selectedEmployee}
-//             >
-//               Refresh Reports
-//             </Button>
-//           </Col>
-//           {/* Reports Table */}
-//           <Col xs={24}>
-//             <Card title="Task Reports" className="card-shadow">
-//               <Table
-//                 dataSource={tableData}
-//                 columns={[
-//                   { title: "Task Name", dataIndex: "taskName", key: "taskName" },
-//                   { title: "Status", dataIndex: "status", key: "status" },
-//                   { title: "Start Date", dataIndex: "startDate", key: "startDate" },
-//                   { title: "End Date", dataIndex: "endDate", key: "endDate" },
-//                 ]}
-//                 rowKey="id"
-//                 pagination={{ pageSize: 10 }}
-//               />
-//             </Card>
-//           </Col>
-//         </Row>
-//       </Content>
-//     </Layout>
-//   );
-// };
-
-// export default Admin;
-
-// import React, { useEffect, useState } from "react";
-
-// const Admin = () => {
-//   const [employeeIds, setEmployeeIds] = useState([]); // Store employee IDs
-//   const [selectedEmployee, setSelectedEmployee] = useState(""); // Selected Employee ID
-//   const [employeeData, setEmployeeData] = useState([]); // Employee Task Data
-
-//   // 📌 Fetch Employee IDs when component mounts
-//   useEffect(() => {
-//     fetchEmployeeIds();
-//   }, []);
-
-//   // ✅ Function to get all employee IDs
-//   const fetchEmployeeIds = async () => {
-//     try {
-//       const response = await fetch(
-//         "https://script.google.com/macros/s/AKfycbyt-_le-p-Fuw2qxhOGRk1CyrkFNJ_51o7fTxJEiGW2ncNzaBZ5pHGJkRU0HShX0aRv4w/exec"
-//       );
-//       const data = await response.json();
-
-//       if (data.success) {
-//         setEmployeeIds(data.data); // Store IDs in state
-//       } else {
-//         console.error("Error fetching employee IDs:", data.message);
-//       }
-//     } catch (error) {
-//       console.error("API error:", error);
-//     }
-//   };
-
-//   // ✅ Function to fetch selected employee's task data
-//   const fetchEmployeeData = async (employeeId) => {
-//     try {
-//       setSelectedEmployee(employeeId); // Update selected employee
-//       const response = await fetch(
-//         `https://script.google.com/macros/s/AKfycbyt-_le-p-Fuw2qxhOGRk1CyrkFNJ_51o7fTxJEiGW2ncNzaBZ5pHGJkRU0HShX0aRv4w/exec?employeeId=${employeeId}`
-//       );
-//       const data = await response.json();
-
-//       if (data.success !== false) {
-//         setEmployeeData(data); // Store employee data
-//       } else {
-//         setEmployeeData([]); // Clear data if empty
-//         console.error("No data found:", data.message);
-//       }
-//     } catch (error) {
-//       console.error("API error:", error);
-//     }
-//   };
-
-//   return (
-//     <div>
-//       <h2>Admin Panel</h2>
-
-//       {/* 🔽 Employee Dropdown */}
-//       <label>Select Employee: </label>
-//       <select onChange={(e) => fetchEmployeeData(e.target.value)}>
-//         <option value="">-- Choose Employee --</option>
-//         {employeeIds.map((id) => (
-//           <option key={id} value={id}>{id}</option>
-//         ))}
-//       </select>
-
-//       {/* 📌 Display Table if Data Exists */}
-//       {employeeData.length > 0 ? (
-//         <table border="1" style={{ marginTop: "20px" }}>
-//           <thead>
-//             <tr>
-//               {Object.keys(employeeData[0]).map((header, index) => (
-//                 <th key={index}>{header}</th>
-//               ))}
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {employeeData.map((row, index) => (
-//               <tr key={index}>
-//                 {Object.values(row).map((value, idx) => (
-//                   <td key={idx}>{value}</td>
-//                 ))}
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       ) : (
-//         selectedEmployee && <p>No data found for {selectedEmployee}</p>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Admin;
-
 import React, { useEffect, useState, useRef } from "react";
 import {
   Layout,
@@ -333,16 +83,6 @@ const Admin = ({ username, setUser, user }) => {
     fetchEmployeeIds();
   }, []);
 
-  // const handleEmployeeSelect = (employeeId) => {
-  //   setSelectedEmployee(employeeId);
-
-  //   // Get the name from the ID
-  //   const selected = employeeIds.find((emp) => emp.id === employeeId);
-  //   setSelectedEmployeeName(selected ? selected.name : null);
-
-  //   fetchEmployeeData(employeeId); // still fetch the data
-  // };
-
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
@@ -361,32 +101,6 @@ const Admin = ({ username, setUser, user }) => {
       console.error("API error:", error);
     }
   };
-
-  // const fetchEmployeeIds = async () => {
-  //   try {
-  //     const response = await fetch(
-  //       "https://script.google.com/macros/s/AKfycbxNBNnpaz6VqtQWefJdGZjC-B-6pPfnfMfK-kW74datu84He9LgUVDHoDKE0icJ7uXOBg/exec" // <- replace with yours
-  //     );
-  //     const data = await response.json();
-
-  //     if (data.success && Array.isArray(data.data)) {
-  //       console.log("User Data:", data.data); // inspect this
-  //       const formatted = data.data.map((item) => {
-  //         console.log("Row item:", item); // see what's inside
-  //         return {
-  //           id: item["Employee ID"] || item.employeeId || Object.values(item)[0],
-  //           name: item["Username"] || item.username || Object.values(item)[1],
-  //         };
-  //       });
-  //       setEmployeeIds(formatted);
-  //       console.log(formatted)
-  //     } else {
-  //       console.error("Error fetching employee IDs:", data.message);
-  //     }
-  //   } catch (error) {
-  //     console.error("API error:", error);
-  //   }
-  // };
 
   // ✅ Function to fetch selected employee's task data
   const fetchEmployeeData = async (employeeId) => {
@@ -457,70 +171,10 @@ const Admin = ({ username, setUser, user }) => {
     }
   };
 
-  //   const formattedData = employeeData.map((item, index) => ({
-  //     key: index,
-  //     clientName: item["Client/Task Name"]?.trim(),
-  //     startDateTime: item["Start Date & Time"]
-  //       ? dayjs(item["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-  //       : "-",
-  //     endDateTime: item["End Date & Time"]
-  //       ? dayjs(item["End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-  //       : "-",
-  //     duration: item["Duration"] || "-",
-  //     details: item["Details"]?.trim() || "-",
-  //     status: item["Status"],
-  //     assigned: item["Assigned By"],
-  //   }));
-
-  //   const columns = [
-  //     {
-  //       title: "Client Name",
-  //       dataIndex: "clientName",
-  //       key: "clientName",
-  //       render: (text) => <Tooltip title={text}>{text}</Tooltip>,
-  //     },
-  //     {
-  //       title: "Start Date",
-  //       dataIndex: "startDateTime",
-  //       key: "startDateTime",
-  //     },
-  //     {
-  //       title: "End Date",
-  //       dataIndex: "endDateTime",
-  //       key: "endDateTime",
-  //     },
-  //     {
-  //       title: "Duration",
-  //       dataIndex: "duration",
-  //       key: "duration",
-  //     },
-  //     {
-  //       title: "Details",
-  //       dataIndex: "details",
-  //       key: "details",
-  //       render: (text) => (
-  //         <Tooltip title={text}>
-  //           {text.length > 30 ? `${text.substring(0, 30)}...` : text}
-  //         </Tooltip>
-  //       ),
-  //     },
-  //     {
-  //       title: "Status",
-  //       dataIndex: "status",
-  //       key: "status",
-  //     },
-  //     {
-  //       title: "Assigned By",
-  //       dataIndex: "assigned",
-  //       key: "assigned",
-  //     },
-  //   ];
-
   const formattedData = employeeData.map((item, index) => {
     console.log("Mapping item", item); // Add this
 
     if (selectedEmployee === "ST006") {
-      // ✅ Mapping for ST006
       return {
         key: index,
         workType: item["Work Type"]?.trim(),
@@ -547,7 +201,6 @@ const Admin = ({ username, setUser, user }) => {
         notes: item["Notes/Remarks"] || "-",
       };
     } else {
-      // ✅ Mapping for other employees
       return {
         key: index,
         clientName: item["Client/Task Name"]?.trim() || "-",
@@ -606,27 +259,6 @@ const Admin = ({ username, setUser, user }) => {
 
     return getValidDate(b) - getValidDate(a); // latest first
   });
-
-  // const sortedData = [...filteredData].sort((a, b) => {
-  //   const parseDate = (str) => {
-  //     if (!str || str === "N/A" || str === "-") return null;
-  //     const date = new Date(str);
-  //     return isNaN(date.getTime()) ? null : date;
-  //   };
-
-  //   const getValidDate = (item) =>
-  //     parseDate(item.linkPostedDateTime) || parseDate(item.startDateTime);
-
-  //   const dateA = getValidDate(a);
-  //   const dateB = getValidDate(b);
-
-  //   // Sort: valid dates come first, latest first
-  //   if (!dateA && !dateB) return 0;
-  //   if (!dateA) return 1;  // Put a at bottom
-  //   if (!dateB) return -1; // Put b at bottom
-
-  //   return dateB - dateA; // Latest first
-  // });
 
   console.log(filteredData.map((item) => item.startDateTime));
   console.log("Formatted Data", formattedData);
@@ -995,19 +627,6 @@ const Admin = ({ username, setUser, user }) => {
       `${selectedEmployeeId} - ${selectedEmployeeName} Task Report ${today}.xlsx`
     );
   };
-  // Task statistics
-  //   const getTaskStats = () => {
-  //     const total = employeeData.length;
-  //     const completed = employeeData.filter(
-  //       (item) => item.Status === "Completed"
-  //     ).length;
-  //     const pending = employeeData.filter(
-  //       (item) => item.Status === "Pending"
-  //     ).length;
-  //     return { total, completed, pending };
-  //   };
-
-  //   const taskStats = getTaskStats();
 
   const customStyles = `
     .spinner-border-sm {
@@ -1315,11 +934,6 @@ const Admin = ({ username, setUser, user }) => {
       {" "}
       <style>{customStyles}</style>
       <Layout className="min-vh-100">
-        {/* <Header style={{ background: "#1890ff", padding: "15px", color: "#fff" }}>
-        <Title level={2} style={{ color: "#fff", textAlign: "center" }}>
-          Admin Panel
-        </Title>
-      </Header> */}
         <Navbar fixed="top" className="header-gradient  py-3">
           <Container
             fluid
@@ -1363,11 +977,6 @@ const Admin = ({ username, setUser, user }) => {
                     }}
                     className="text-center"
                   >
-                    {/* <UserOutlined />
-                    <br />
-
-                    <span className="gradient-text">    {username}</span>
-                    </div> */}
                     <div>
                       <UserOutlined
                         className="gradient-background text-white "
@@ -1405,7 +1014,6 @@ const Admin = ({ username, setUser, user }) => {
         </Navbar>
 
         <Content className="container mt-5 pt-5">
-          {/* Employee Selection */}
           <Row
             gutter={[24, 24]}
             justify="center"
@@ -1430,11 +1038,6 @@ const Admin = ({ username, setUser, user }) => {
                     placeholder="Select Employee"
                     onChange={fetchEmployeeData}
                   >
-                    {/* {employeeIds.map((id) => (
-                    <Option key={id} value={id}>
-                      {id}
-                    </Option>
-                  ))} */}
                     {employeeList.map((emp) => (
                       <Option key={emp.id} value={emp.id}>
                         {emp.id} - {emp.name}
@@ -1446,32 +1049,6 @@ const Admin = ({ username, setUser, user }) => {
             </Col>
           </Row>
 
-          {/* Task Statistics Cards */}
-          {/* <Row gutter={[16, 16]} justify="center">
-          {[
-            { title: "Total Tasks", value: taskStats.total, color: "#1890ff" },
-            {
-              title: "Completed Tasks",
-              value: taskStats.completed,
-              color: "#52c41a",
-            },
-            { title: "Pending Tasks", value: taskStats.pending, color: "#faad14" },
-          ].map(({ title, value, color }) => (
-            <Col xs={24} sm={8} key={title}>
-              <Card
-                style={{
-                  background: color,
-                  color: "#fff",
-                  textAlign: "center",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                }}
-              >
-                {title}: {value}
-              </Card>
-            </Col>
-          ))}
-        </Row> */}
           <Row gutter={[16, 16]} justify="center">
             {[
               {
@@ -1561,56 +1138,6 @@ const Admin = ({ username, setUser, user }) => {
             ))}
           </Row>
 
-          {/* Search Bar & Refresh */}
-          {/* <Row justify="center" style={{ marginTop: "20px", marginBottom: "10px" }}>
-          <Col>
-           <Input
-              placeholder="Search tasks..."
-              prefix={<SearchOutlined />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 300, marginRight: "10px" }}
-            /> 
-             <Input
-                                    placeholder="Search Tasks..."
-                                    prefix={<SearchOutlined />}
-                                    allowClear
-                                    value={searchText}
-                                    // onChange={(e) => setSearchText(e.target.value)}
-                                    onChange={handleSearchChange}
-                                    disabled={selectedStatus !== null}
-                                    style={{ width: 500 }}
-                                  />
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              onClick={() => fetchEmployeeData(selectedEmployee)}
-            >
-              Refresh
-            </Button>
-          </Col>
-        </Row> */}
-
-          {/* Task Table */}
-          {/* <Table
-        //   dataSource={filteredData.filter((item) =>
-        //     Object.values(item).some((val) =>
-        //       val?.toString().toLowerCase().includes(searchText.toLowerCase())
-        //     )
-        //   )}
-        dataSource={filteredData}
-        columns={columns}
-        rowKey={(record) => record.key}
-        pagination={{
-          pageSize: 10,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} of ${total} items`,
-        }}
-        scroll={{ x: "max-content" }}
-        size="middle"
-        bordered
-        loading={refreshing}
-        className="mt-2"    /> */}
           <Col xs={24} className="mt-5">
             <Card
               title={
@@ -1682,9 +1209,6 @@ const Admin = ({ username, setUser, user }) => {
                 bordered
                 loading={refreshing}
                 className="mt-2"
-                // rowClassName={(record) =>
-                //   record.status === "Completed" ? "bg-light" : ""
-                // }
               />
             </Card>
           </Col>

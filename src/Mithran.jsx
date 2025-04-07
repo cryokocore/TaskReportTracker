@@ -1,576 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import {
-//   Form,
-//   Input,
-//   Button,
-//   DatePicker,
-//   message,
-//   Space,
-//   Table,
-//   Select,
-//   Tooltip,
-//   Avatar,
-//   Layout,
-// } from "antd";
-// import "bootstrap/dist/css/bootstrap.min.css";
-// import "antd/dist/reset.css";
-// import TextArea from "antd/es/input/TextArea";
-// import dayjs from "dayjs";
-// import utc from "dayjs/plugin/utc";
-// import {
-//   UserOutlined,
-//   LogoutOutlined,
-//   ReloadOutlined,
-// } from "@ant-design/icons";
-// import { Button as BootstrapButton } from "react-bootstrap";
-// import { Spinner, Navbar, Nav, Container } from "react-bootstrap";
-// import logo from "./Images/stratify-logo.png";
-// import Mithran from "./Images/Mithiran.png";
-
-// dayjs.extend(utc);
-// const { Header, Content } = Layout;
-
-// message.config({
-//   duration: 3,
-//   maxCount: 3,
-// });
-
-// export default function MithranTracker({ username, setUser }) {
-//   const [form] = Form.useForm();
-//   const [loading, setLoading] = useState(false);
-//   const [dateTime, setDateTime] = useState(null);
-//   const [linkDateTime, setLinkDateTime] = useState(null);
-
-//   const [tableData, setTableData] = useState([]); // Updated state name
-//   const [showTable, setShowTable] = useState(false);
-//   const [refreshing, setRefreshing] = useState(false);
-//   const [workType, setWorkType] = useState(null);
-//   const [startDateTime, setStartDateTime] = useState(null);
-//   const [endDateTime, setEndDateTime] = useState(null);
-
-//   const handleLinkChange = (e) => {
-//         if (e.target.value) {
-//           const currentTime = dayjs().utcOffset(330).startOf("second");
-//           console.log("Updated DateTime:", currentTime.format("YYYY-MM-DD HH:mm:ss"));
-//           setLinkDateTime(currentTime);
-//           console.log("linkDateTime:", linkDateTime);
-//         }
-//       };
-
-//       useEffect(() => {
-//         if (linkDateTime) {
-//           console.log("Updated dateTime state:", linkDateTime.format("YYYY-MM-DD HH:mm:ss"));
-//            form.setFieldsValue({ dateTime: linkDateTime });
-//         }
-//       }, [linkDateTime]);
-
-//   const handleLogout = () => {
-//     setUser(null); // Reset user state to show login page
-//     message.info(`See you soon ${username}. Take care!`);
-//   };
-
-//   const handleWorkTypeChange = (value) => {
-//     setWorkType(value);
-//     form.setFieldsValue({
-//       link: value === "Social Media" ? "" : undefined,
-//       socialMediaType: value === "Social Media" ? "" : undefined,
-//       startDateTime: value !== "Social Media" ? "" : undefined,
-//       endDateTime: value !== "Social Media" ? "" : undefined,
-//     });
-//   };
-
-//   const fetchData = async () => {
-//     setRefreshing(true);
-//     try {
-//       const response = await fetch(
-//         "https://script.google.com/macros/s/AKfycbxhY43Q1XMOUV7FAR5zhk3k4VE7aayMLmPBkIbZEbIbQ3ODkpPS9uI4ruv3hWY5P0DsQA/exec"
-//       );
-//       const text = await response.text();
-//       console.log("Raw Response:", text);
-
-//       try {
-//         const result = JSON.parse(text);
-
-//         if (
-//           result.success === false ||
-//           !Array.isArray(result) ||
-//           result.length === 0
-//         ) {
-//           message.warning("No data found."); // ✅ Show warning instead of error
-//           setTableData([]); // ✅ Clear table when no data is found
-//           return;
-//         }
-
-//         console.log("Fetched Data:", result);
-//         setTableData(result);
-//         message.success("Showing updated data in the table."); // ✅ Show success message
-//       } catch {
-//         throw new Error("Invalid JSON response.");
-//       }
-//     } catch (error) {
-//       console.error("Error fetching data:", error);
-//       message.error("Failed to fetch data.");
-//       setTableData([]); // ✅ Clear table when fetch fails
-//     } finally {
-//       setRefreshing(false); // Hide loader when fetching is done
-//     }
-//   };
-
-//   // Fetch data on mount
-//   useEffect(() => {
-//     fetchData();
-//   }, []);
-
-//   const handleSubmit = async (values) => {
-//     setLoading(true);
-//     const formattedDateTime = linkDateTime
-//     ? linkDateTime.utcOffset(330).format("YYYY-MM-DD HH:mm:ss")
-//     : "";
-
-//   console.log("Final Sent to Google Sheets (Fixed Time):", formattedDateTime);
-
-//     console.log("Form Values Submitted:", values); // Debugging
-
-//     // Extract values
-//     const {
-//       workType,
-//       clientName,
-//       link,
-//       details,
-//       socialMediaType,
-//       startDateTime,
-//       endDateTime,
-//       status
-//     } = values;
-
-//     if (!clientName) {
-//       message.error("Client Name is required.");
-//       setLoading(false);
-//       return;
-//     }
-
-//     if (workType === "Social Media") {
-//       if (!link || link.trim() === "") {
-//         message.error("Link is required for social media work.");
-//         setLoading(false);
-//         return;
-//       }
-//       if (!socialMediaType) {
-//         message.error("Please select a social media type.");
-//         setLoading(false);
-//         return;
-//       }
-//     }
-
-//     if (workType !== "Social Media" && (!startDateTime || !endDateTime)) {
-//       message.error("Please select start and end date/time.");
-//       setLoading(false);
-//       return;
-//     }
-
-//     const formData = new URLSearchParams();
-//     formData.append("action", "submit");
-//     formData.append("workType", workType);
-//     formData.append("clientName", clientName);
-//     formData.append("link", workType === "Social Media" ? link : "");
-//     formData.append("details", details || "N/A");
-//     formData.append("dateTime", formattedDateTime || "N/A"  );
-
-//     if (workType === "Social Media") {
-//       formData.append("socialMediaType", socialMediaType);
-//       formData.append("startDateTime", "");
-//       formData.append("endDateTime", "");
-//     } else {
-//       formData.append("socialMediaType", ""); // Empty for non-Social Media
-//       formData.append(
-//         "startDateTime",
-//         startDateTime ? startDateTime.toISOString() : ""
-//       );
-//       formData.append(
-//         "endDateTime",
-//         endDateTime ? endDateTime.toISOString() : ""
-//       );
-//     }
-//     formData.append("status", status);
-//     try {
-//       const response = await fetch(
-//         "https://script.google.com/macros/s/AKfycbxhY43Q1XMOUV7FAR5zhk3k4VE7aayMLmPBkIbZEbIbQ3ODkpPS9uI4ruv3hWY5P0DsQA/exec",
-//         {
-//           method: "POST",
-//           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//           body: formData.toString(),
-//         }
-//       );
-
-//       const result = await response.json();
-//       if (result.success) {
-//         message.success("Task Report Submitted Successfully!");
-//         form.resetFields();
-//         setDateTime(null);
-//         setStartDateTime(null);
-//         setEndDateTime(null);
-//         fetchData(); // Refresh table after submission
-
-//       } else {
-//         message.error(`Error: ${result.error || "Unknown error"}`);
-//       }
-//     } catch (error) {
-//       message.error("An error occurred while saving data.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const formattedData = tableData.map((item, index) => ({
-//     key: index,
-//     workType: item["Work Type"]?.trim(),
-//     clientName: item["Client Name"]?.trim(),
-//     startDateTime: item["Start Date & Time"] ? dayjs(item["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss") : "-",
-//     endDateTime: item[" End Date & Time"] ? dayjs(item[" End Date & Time"]).format("YYYY-MM-DD HH:mm:ss") : "N/A",
-//     duration: item["Duration"] && item["Duration"] !== "1899-12-29T18:38:53.000Z" ? item["Duration"] : "N/A",
-//     details: item["Details"]?.trim() || "N/A",
-//     socialMediaType: item["Social Media Type"]?.trim() || "N/A",
-//     link: item["Link"] || "N/A",
-//     linkPostedDateTime: item["Link Posted Date & Time"] ? dayjs(item["Link Posted Date & Time"]).format("YYYY-MM-DD HH:mm:ss") : "N/A",
-//     totalLinkCount: item["Total Link Count"] || "N/A",
-//     status: item["Status"]
-//   }));
-
-//   console.log("Consoled Formatted Data:", formattedData);
-
-//   const columns = [
-//     { title: "Work Type", dataIndex: "workType", key: "workType", width: 150,
-//       render: (text) => <Tooltip title={text}>{text}</Tooltip>
-//      },
-//     { title: "Client Name", dataIndex: "clientName", key: "clientName", width: 150, render: (text) => <Tooltip title={text}>{text}</Tooltip> },
-//     { title: "Start Date & Time", dataIndex: "startDateTime", key: "startDateTime", width: 180, render: (text) => <Tooltip title={text}>{text}</Tooltip> },
-//     { title: "End Date & Time", dataIndex: "endDateTime", key: "endDateTime", width: 180, render: (text) => <Tooltip title={text}>{text}</Tooltip> },
-//     { title: "Duration", dataIndex: "duration", key: "duration", width: 120, render: (text) => <Tooltip title={text}>{text}</Tooltip> },
-//     {
-//       title: "Details",
-//       dataIndex: "details",
-//       key: "details",
-//       width: 300,
-//       render: (text) => {
-//         const truncatedText = text.length > 50 ? `${text.substring(0, 50)}...` : text;
-//         return <Tooltip title={text}>{truncatedText}</Tooltip>;
-//       },
-//     },    { title: "Social Media Type", dataIndex: "socialMediaType", key: "socialMediaType", width: 150, render: (text) => <Tooltip title={text}>{text}</Tooltip> },
-//     {
-//       title: "Link",
-//       dataIndex: "link",
-//       key: "link",
-//       width: 200,
-//       render: (text) => {
-//         if (!text || text === "N/A") return <Tooltip title="N/A">N/A</Tooltip>;
-
-//         const truncatedText = text.length > 50 ? `${text.substring(0, 50)}...` : text;
-//         return (
-//           <Tooltip title={text}>
-//             <a href={text} target="_blank" rel="noopener noreferrer">
-//               {truncatedText}
-//             </a>
-//           </Tooltip>
-//         );
-//       },
-//     },
-//     { title: "Link Posted Date & Time", dataIndex: "linkPostedDateTime", key: "linkPostedDateTime", width: 180,  render: (text) => <Tooltip title={text}>{text}</Tooltip>, },
-//     { title: "Total Link Count", dataIndex: "totalLinkCount", key: "totalLinkCount", width: 100,
-//       render: (text) => <Tooltip title={text}>{text}</Tooltip>
-//      },
-//      {title:"Status", dataIndex:"status", key:"status",  width: 120,       render: (text) => <Tooltip title={text}>{text}</Tooltip>
-//     }
-//   ];
-
-//   const styl = `
-// .spinner-border-sm {
-//     --bs-spinner-width: 1rem;
-//     --bs-spinner-height: 1rem;
-//     --bs-spinner-border-width: 2px;
-//     margin-right: 3px;
-// }
-// .ant-btn {
-//     font-size: 20px;
-//     height: 32px;
-//     padding: 0px 2px 0px 4px;
-//     border-radius: 5px;
-
-// }
-//     ant-btn-color-dangerous.ant-btn-variant-solid {
-//     background: #fff;
-//     color: #ff4d4f;
-// }
-//    .ant-btn-color-dangerous {
-
-// }
-//     `;
-
-//   return (
-//     <div className="container-fluid m-0 p-0 ">
-//       <style>{styl}</style>
-//       <Layout className="min-vh-100  ">
-
-//         <Navbar bg="white" fixed="top" className="shadow-sm p-3">
-//           <Container
-//             fluid
-//             className="d-flex justify-content-between align-items-center"
-//           >
-//             <div>
-//               <img src={logo} alt="Stratify logo" height="50" />
-//             </div>
-
-//             <div className="text-center flex-grow-1">
-//               <h3
-//                 className="m-0 fs-1 "
-//                 style={{
-//                   background:
-//                     "linear-gradient(to right, rgb(131 32 188), rgb(105 67 172))",
-//                   WebkitBackgroundClip: "text",
-//                   color: "transparent",
-//                 }}
-//               >{`${username}'s Task Report Tracker`}</h3>
-//             </div>
-
-//             <div className="d-flex align-items-center">
-//               <Tooltip title={username} placement="top">
-//                 <Avatar
-//                   size={50}
-//                   src={Mithran}
-//                   alt={username}
-//                   icon={<UserOutlined />}
-//                   style={{ backgroundColor: "lightblue" }}
-//                 />
-//               </Tooltip>
-//               <Button
-//                 color="danger"
-//                 variant="solid"
-//                 className="ms-3 d-flex align-items-center"
-//                 onClick={handleLogout}
-//               >
-//                 <LogoutOutlined className="me-1 " />
-//               </Button>
-//             </div>
-//           </Container>
-//         </Navbar>
-//         <Content className="container mt-5 pt-5">
-//           <Form
-//             layout="vertical"
-//             form={form}
-//             onFinish={handleSubmit}
-//             className="p-4 border rounded-4 shadow bg-white"
-//           >
-//             <div className="row">
-//               <div className="col-12 col-lg-6">
-//                 <Form.Item
-//                   label="Client Name"
-//                   name="clientName"
-//                   rules={[{ required: true, message: "Enter client name" }]}
-//                 >
-//                   <Input placeholder="Enter client name" />
-//                 </Form.Item>
-//               </div>
-//               <div className="col-12 col-lg-6">
-//                 <Form.Item
-//                   label="Work Type"
-//                   name="workType"
-//                   rules={[
-//                     { required: true, message: "Please select your work time" },
-//                   ]}
-//                 >
-//                   <Select
-//                     placeholder="Select work type"
-//                     onChange={handleWorkTypeChange}
-//                   >
-//                     <Select.Option value="Social Media">
-//                       Social Media
-//                     </Select.Option>
-//                     <Select.Option value="Other">Other</Select.Option>
-//                   </Select>
-//                 </Form.Item>
-//               </div>
-//               {workType === "Social Media" ? (
-//                 <>
-//                   <div className="col-12 col-lg-6">
-//                     <Form.Item
-//                       label="Social Media Type"
-//                       name="socialMediaType"
-//                       rules={[
-//                         { required: true, message: "Select social media" },
-//                       ]}
-//                     >
-//                       <Select placeholder="Select social media type">
-//                         <Select.Option value="Facebook">Facebook</Select.Option>
-//                         <Select.Option value="Instagram">
-//                           Instagram
-//                         </Select.Option>
-//                         <Select.Option value="LinkedIn">LinkedIn</Select.Option>
-//                         <Select.Option value="X">X</Select.Option>
-//                         <Select.Option value="YouTube">YouTube</Select.Option>
-//                       </Select>
-//                     </Form.Item>
-//                   </div>
-//                   <div className="col-12 col-lg-6">
-//                     <Form.Item
-//                       label="Link"
-//                       name="link"
-//                       rules={[{ required: true, message: "Enter the link" }]}
-//                     >
-//                       <TextArea
-//                         placeholder="Enter the link"
-//                         onChange={handleLinkChange}
-//                       />
-//                     </Form.Item>
-//                   </div>
-//                   <div className="col-12 col-lg-6">
-//                     <Form.Item label="Date & Time" name="dateTime">
-//                       <DatePicker
-//                           showTime
-//                           value={linkDateTime? dayjs(linkDateTime) : null}                          disabled // Disable DatePicker for display
-//                         style={{ width: "100%" }}
-//                       />
-//                     </Form.Item>
-//                   </div>
-//                 </>
-//               ) : (
-//                 <>
-//                   <div className="col-12 col-lg-6">
-//                     <Form.Item
-//                       label="Start Date & Time"
-//                       name="startDateTime" // ✅ FIX: Added name attribute
-//                       rules={[
-//                         { required: true, message: "Select start date & time" },
-//                       ]}
-//                     >
-//                       <DatePicker
-//                         showTime
-//                         value={startDateTime}
-//                         onChange={(value) =>
-//                           form.setFieldsValue({ startDateTime: value })
-//                         } // ✅ FIX: Update form value
-//                         style={{ width: "100%" }}
-//                       />
-//                     </Form.Item>
-//                   </div>
-//                   <div className="col-12 col-lg-6">
-//                     <Form.Item
-//                       label="End Date & Time"
-//                       name="endDateTime" // ✅ FIX: Added name attribute
-//                       rules={[
-//                         { required: true, message: "Select end date & time" },
-//                       ]}
-//                     >
-//                       <DatePicker
-//                         showTime
-//                         value={endDateTime}
-//                         onChange={(value) =>
-//                           form.setFieldsValue({ endDateTime: value })
-//                         } // ✅ FIX: Update form value
-//                         style={{ width: "100%" }}
-//                       />
-//                     </Form.Item>
-//                   </div>
-
-//                 </>
-//               )}
-
-//               <div className="col-12 col-lg-6">
-//                 <Form.Item
-//                   label="Details"
-//                   name="details"
-//                   rules={[{ required: true, message: "Enter the details" }]}
-//                 >
-//                   <TextArea placeholder="Enter the task details" />
-//                 </Form.Item>
-//               </div>
-
-//               <div className="col-12 col-lg-6">
-//                 <Form.Item
-//                   label="Status"
-//                   name="status"
-//                   rules={[
-//                     { required: true, message: "Please select status of work" },
-//                   ]}
-//                 >
-//                   <Select
-//                     placeholder="Select work type"
-//                   >
-//                     <Select.Option value="Not Started">
-//                     Not Started
-//                     </Select.Option>
-//                     <Select.Option value="Work in Progress">Work in Progress</Select.Option>
-//                     <Select.Option value="Under Review">Under Review</Select.Option>
-//                     <Select.Option value="Pending">Pending</Select.Option>
-//                     <Select.Option value="Hold">Hold</Select.Option>
-//                     <Select.Option value="Completed">Completed</Select.Option>
-
-//                   </Select>
-//                 </Form.Item>
-//               </div>
-
-//               <div className="text-center mt-3 ">
-//                 <Button
-//                   htmlType="submit"
-//                   color="primary"
-//                   variant="solid"
-//                   loading={loading}
-//                   style={{
-//                     paddingRight: "30px",
-//                     paddingLeft: "30px",
-//                     paddingTop: "18px",
-//                     paddingBottom: "18px",
-//                   }}
-//                 >
-//                   {loading ? "Submitting..." : "Submit"}
-//                 </Button>
-//               </div>
-//             </div>
-//           </Form>
-//           <div className="text-center mt-4">
-//             <Space>
-//               {/* <BootstrapButton
-//                 onClick={() => setShowTable(!showTable)}
-//                 className="text-white"
-//                 variant={showTable ? "danger" : "warning"}
-//               >
-//                 {showTable ? "Hide Table" : "Show Table"}
-//               </BootstrapButton> */}
-
-//                 <BootstrapButton
-//                   onClick={fetchData}
-//                   variant="success"
-//                   loading={refreshing}
-//                 >
-//                   {refreshing ? (
-//                     <>
-//                       <Spinner
-//                         as="span"
-//                         animation="border"
-//                         size="sm"
-//                         role="status"
-//                       />
-//                       Refreshing...
-//                     </>
-//                   ) : (
-//                     "Refresh"
-//                   )}
-//                 </BootstrapButton>
-//             </Space>
-//           </div>
-
-//             <Table
-//               dataSource={formattedData}
-//               columns={columns}
-//               rowKey={(record) => record["Link"]}
-//               className="mt-3"
-//               pagination={{ pageSize: 10 }}
-//             />
-
-//         </Content>
-//       </Layout>
-//     </div>
-//   );
-// }
-
 import React, { useState, useEffect, useRef } from "react";
 import {
   Form,
@@ -590,7 +17,6 @@ import {
   Col,
   Typography,
   Statistic,
-  
 } from "antd";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "antd/dist/reset.css";
@@ -619,7 +45,7 @@ import {
   SearchOutlined,
   SyncOutlined,
   PauseCircleOutlined,
-  DownloadOutlined
+  DownloadOutlined,
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -739,7 +165,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        // "https://script.google.com/macros/s/AKfycbwjoPJbFzQXsScUWN3tQDaU9cVnzggEv0b443aQ-c4_R4LnzYctYVnNIinQx2Um1ya_6A/exec"
         `https://script.google.com/macros/s/AKfycbz2rACgfR3kzocwi1B4TR8-APifgjL0aB_I9hijq1qOsD6jJUFNGbz8uFwQDC_9zWIfKg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
       const text = await response.text();
@@ -921,14 +346,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
   const employeeId = user?.employeeId;
 
-  // const filteredData = formattedData.filter((item) =>
-  //   Object.values(item).some(
-  //     (value) =>
-  //       value &&
-  //       value.toString().toLowerCase().includes(searchText.toLowerCase())
-  //   )
-  // );
-
   const statusMapping = {
     total: null,
     completed: "Completed",
@@ -939,7 +356,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     hold: "Hold",
   };
   const handleCardClick = (key) => {
-    // setSelectedStatus(statusMapping[key]);
     setSearchText(""); // ✅ Clear search text
     setIsSearchActive(false);
     setSelectedStatus((prev) =>
@@ -957,34 +373,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       setIsSearchActive(false); // ✅ Restore normal mode when search is cleared
     }
   };
-
-  // const filteredData = formattedData.filter((item) => {
-  //   // Ensure safe access with optional chaining
-  //   const statusMatch =
-  //     !selectedStatus || item.status?.toLowerCase() === selectedStatus.toLowerCase();
-
-  //   const searchMatch =
-  //     !searchText ||
-  //     Object.values(item).some(
-  //       (value) =>
-  //         value &&
-  //         value.toString().toLowerCase().includes(searchText.toLowerCase())
-  //     );
-
-  //   return statusMatch && searchMatch; // ✅ Ensure both conditions work together
-  // });
-
-  // const filteredData = formattedData.filter((item) => {
-  //   if (isSearchActive) {
-  //     return Object.values(item).some(
-  //       (value) =>
-  //         value &&
-  //         value.toString().toLowerCase().includes(searchText.toLowerCase())
-  //     );
-  //   } else {
-  //     return !selectedStatus || item.status?.toLowerCase() === selectedStatus.toLowerCase();
-  //   }
-  // });
 
   const filteredData = formattedData.filter((item) => {
     if (isSearchActive) {
@@ -1174,109 +562,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     },
   ];
 
-  // const getTaskStats = () => {
-  //   if (!tableData || tableData.length === 0)
-  //     return {
-  //       total: 0,
-  //       completed: 0,
-  //       pending: 0,
-  //       workinprogress: 0,
-  //       underReview: 0,
-  //       hold: 0,
-  //       notStarted: 0,
-
-  //     };
-
-  //   const total = tableData.length;
-  //   const completed = tableData.filter(
-  //     (item) => item["Status"] === "Completed"
-  //   ).length;
-  //   const pending = tableData.filter(
-  //     (item) => item["Status"] === "Pending"
-  //   ).length;
-  //   // const incomplete = tableData.filter(
-  //   //   (item) =>
-  //   //     item["Status"] === "Not Started" ||
-  //   //     item["Status"] === "Work in Progress" ||
-  //   //     item["Status"] === "Hold"
-  //   // ).length;
-  //   const underReview = tableData.filter(
-  //     (item) => item["Status"] === "Under Review"
-  //   ).length;
-  //   const workinprogress = tableData.filter(
-  //     (item) => item["Status"] === "Work in Progress"
-  //   ).length;
-  //   const hold = tableData.filter((item) => item["Status"] === "Hold").length;
-  //   const notStarted = tableData.filter(
-  //     (item) => item["Status"] === "Not Started"
-  //   ).length;
-  //   return {
-  //     total,
-  //     completed,
-  //     pending,
-  //     workinprogress,
-  //     underReview,
-  //     hold,
-  //     notStarted,
-  //   };
-  // };
-
-  // const taskStats = getTaskStats();
-
-  // const getTaskStats = () => {
-  //   if (!tableData || tableData.length === 0) {
-  //     return {
-  //       total: 0,
-  //       completed: 0,
-  //       pending: 0,
-  //       workinprogress: 0,
-  //       underReview: 0,
-  //       hold: 0,
-  //       notStarted: 0,
-  //       percentages: {
-  //         completed: 0,
-  //         pending: 0,
-  //         workinprogress: 0,
-  //         underReview: 0,
-  //         hold: 0,
-  //         notStarted: 0,
-  //       },
-  //     };
-  //   }
-
-  //   const total = tableData.length;
-  //   const statuses = [
-  //     "Completed",
-  //     "Pending",
-  //     "Work in Progress",
-  //     "Under Review",
-  //     "Hold",
-  //     "Not Started",
-  //   ];
-  //   const stats = {};
-
-  //   statuses.forEach((status) => {
-  //     stats[status] = tableData.filter((item) => item["Status"] === status).length;
-  //   });
-
-  //   const getPercentage = (count) => (total ? ((count / total) * 100).toFixed(1) : "0.0");
-
-  //   return {
-  //     total,
-  //     ...stats,
-  //     percentages: {
-  //       completed: getPercentage(stats["Completed"]),
-  //       pending: getPercentage(stats["Pending"]),
-  //       workinprogress: getPercentage(stats["Work in Progress"]),
-  //       underReview: getPercentage(stats["Under Review"]),
-  //       hold: getPercentage(stats["Hold"]),
-  //       notStarted: getPercentage(stats["Not Started"]),
-  //     },
-  //   };
-  // };
-
-  // const taskStats = getTaskStats();
-
   const getTaskStats = () => {
     if (!tableData || tableData.length === 0) {
       return {
@@ -1309,7 +594,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     ];
     const stats = {};
 
-    // Count occurrences of each status
     statuses.forEach((status) => {
       stats[status] = tableData.filter(
         (item) => item["Status"] === status
@@ -1339,97 +623,101 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   };
 
   const taskStats = getTaskStats();
-   const handleExport = () => {
-      const exportData = filteredData.map(({ key, ...rest }) => {
-        const newRow = {};
-        Object.keys(rest).forEach((k) => {
-          const capitalizedKey = k.charAt(0).toUpperCase() + k.slice(1);
-          newRow[capitalizedKey] = rest[k];
-        });
-        return newRow;
+  const handleExport = () => {
+    const exportData = filteredData.map(({ key, ...rest }) => {
+      const newRow = {};
+      Object.keys(rest).forEach((k) => {
+        const capitalizedKey = k.charAt(0).toUpperCase() + k.slice(1);
+        newRow[capitalizedKey] = rest[k];
       });
-  
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-  
-      const range = XLSX.utils.decode_range(worksheet["!ref"]);
-  
-      // Apply header styles
+      return newRow;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+    const range = XLSX.utils.decode_range(worksheet["!ref"]);
+
+    // Apply header styles
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const headerCell = XLSX.utils.encode_cell({ r: 0, c: C });
+      const cell = worksheet[headerCell];
+
+      if (cell) {
+        cell.s = {
+          fill: {
+            fgColor: { rgb: "FFFF00" }, // Yellow background
+          },
+          font: {
+            bold: true,
+            sz: 14,
+            color: { rgb: "000000" }, // Ensure font is black
+          },
+          alignment: {
+            horizontal: "center",
+            vertical: "center",
+            wrapText: true, // Makes long text readable
+          },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          },
+        };
+      }
+    }
+
+    // Apply border & wrapping to all cells
+    for (let R = range.s.r; R <= range.e.r; ++R) {
       for (let C = range.s.c; C <= range.e.c; ++C) {
-        const headerCell = XLSX.utils.encode_cell({ r: 0, c: C });
-        const cell = worksheet[headerCell];
-  
+        const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = worksheet[cell_address];
         if (cell) {
-          cell.s = {
-            fill: {
-              fgColor: { rgb: "FFFF00" }, // Yellow background
-            },
-            font: {
-              bold: true,
-              sz: 14,
-              color: { rgb: "000000" }, // Ensure font is black
-            },
-            alignment: {
-              horizontal: "center",
-              vertical: "center",
-              wrapText: true, // Makes long text readable
-            },
-            border: {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } },
-            },
+          if (!cell.s) cell.s = {};
+          cell.s.border = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          };
+          cell.s.alignment = {
+            vertical: "center",
+            horizontal: "center",
+            wrapText: true,
           };
         }
       }
-  
-      // Apply border & wrapping to all cells
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
-          const cell = worksheet[cell_address];
-          if (cell) {
-            if (!cell.s) cell.s = {};
-            cell.s.border = {
-              top: { style: "thin", color: { rgb: "000000" } },
-              bottom: { style: "thin", color: { rgb: "000000" } },
-              left: { style: "thin", color: { rgb: "000000" } },
-              right: { style: "thin", color: { rgb: "000000" } },
-            };
-            cell.s.alignment = {
-              vertical: "center",
-              horizontal: "center",
-              wrapText: true,
-            };
-          }
-        }
-      }
-  
-      // Adjust column widths
-      const maxWidths = [];
-      exportData.forEach((row) => {
-        Object.values(row).forEach((val, colIdx) => {
-          const len = String(val).length;
-          maxWidths[colIdx] = Math.max(maxWidths[colIdx] || 10, len);
-        });
+    }
+
+    // Adjust column widths
+    const maxWidths = [];
+    exportData.forEach((row) => {
+      Object.values(row).forEach((val, colIdx) => {
+        const len = String(val).length;
+        maxWidths[colIdx] = Math.max(maxWidths[colIdx] || 10, len);
       });
-  
-      worksheet["!cols"] = maxWidths.map((w) => ({ wch: w + 7 })); // +5 for padding
-  
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, `${employeeId}-${username}`);
-  
-      const excelBuffer = XLSX.write(workbook, {
-        bookType: "xlsx",
-        type: "array",
-      });
-  
-      const data = new Blob([excelBuffer], {
-        type: "application/octet-stream",
-      });
-      const today = new Date().toISOString().split("T")[0];
-      saveAs(data, `${employeeId} - ${username} Task Report ${today}.xlsx`);
-    };
+    });
+
+    worksheet["!cols"] = maxWidths.map((w) => ({ wch: w + 7 })); // +5 for padding
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      `${employeeId}-${username}`
+    );
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], {
+      type: "application/octet-stream",
+    });
+    const today = new Date().toISOString().split("T")[0];
+    saveAs(data, `${employeeId} - ${username} Task Report ${today}.xlsx`);
+  };
   const customStyles = `
     .spinner-border-sm {
       --bs-spinner-width: 1rem;
@@ -1679,24 +967,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
             </div>
 
             <div className="d-flex align-items-center profile-container">
-              {/* <Avatar
-                size={48}
-                src={Mithran}
-                // icon={<UserOutlined />}
-                style={{ backgroundColor: "#1890ff", cursor: "pointer" }}
-                onMouseEnter={() => setShowLogout(true)}
-              />
-
-              {showLogout && (
-                <div
-                  className="logout-popup"
-                  onClick={handleLogout}
-                  onMouseLeave={() => setShowLogout(false)}
-                >
-                  <LogoutOutlined style={{ marginRight: "4px" }} />
-                  <span>Logout</span>
-                </div>
-              )} */}
               <Avatar
                 size={48}
                 style={{ backgroundColor: "#2f81c2", cursor: "pointer" }}
@@ -1719,10 +989,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                     }}
                     className="text-center "
                   >
-                    {/* <UserOutlined />
-                                  <br />
-                                  <span className="gradient-text">    {username}</span> */}
-
                     <div>
                       <UserOutlined
                         className="gradient-background text-white "
@@ -1741,7 +1007,11 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                     </div>
                   </div>
                   <div
-                    style={{ borderBottom: "3px solid #f0f0f0", borderRadius:"50%", width: "150px",   }}
+                    style={{
+                      borderBottom: "3px solid #f0f0f0",
+                      borderRadius: "50%",
+                      width: "150px",
+                    }}
                     className="mt-1"
                   ></div>
                   <div className="logout-action mt-2 " onClick={handleLogout}>
@@ -1924,30 +1194,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                             />
                           </Form.Item>
                         </Col>
-                        {/* <Col xs={24} md={12}>
-                          <Form.Item
-                            label={
-                              <span>
-                                <CalendarOutlined /> End Date & Time
-                              </span>
-                            }
-                            name="endDateTime"
-                            rules={[
-                              {
-                                required: true,
-                                message: "Please select end date & time",
-                              },
-                            ]}
-                          >
-                            <DatePicker
-                              showTime
-                              value={endDateTime}
-                              onChange={(value) => setEndDateTime(value)}
-                              style={{ width: "100%" }}
-                              size="large"
-                            />
-                          </Form.Item>
-                        </Col> */}
+
                         <Col xs={24} md={12}>
                           <Form.Item
                             label={
@@ -2255,7 +1502,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                 className="card-shadow"
                 headStyle={{ borderBottom: "2px solid #f0f0f0" }}
               >
-                  <Button
+                <Button
                   type="primary"
                   onClick={handleExport}
                   icon={<DownloadOutlined />}
@@ -2280,9 +1527,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                   bordered
                   loading={refreshing}
                   className="mt-2"
-                  // rowClassName={(record) =>
-                  //   record.status === "Completed" ? "bg-light" : ""
-                  // }
                 />
               </Card>
             </Col>
