@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/TaskReportTracker/static/css/main.a274177b.css",
+    "main.js": "/TaskReportTracker/static/js/main.860ecf30.js",
+    "static/js/453.49b82efc.chunk.js": "/TaskReportTracker/static/js/453.49b82efc.chunk.js",
+    "static/media/Mithiran.png": "/TaskReportTracker/static/media/Mithiran.cdc27cb5e3c17ae92993.png",
+    "index.html": "/TaskReportTracker/index.html",
+    "main.a274177b.css.map": "/TaskReportTracker/static/css/main.a274177b.css.map",
+    "main.860ecf30.js.map": "/TaskReportTracker/static/js/main.860ecf30.js.map",
+    "453.49b82efc.chunk.js.map": "/TaskReportTracker/static/js/453.49b82efc.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a274177b.css",
+    "static/js/main.860ecf30.js"
+  ]
+}
