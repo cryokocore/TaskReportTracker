@@ -208,8 +208,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       ? linkDateTime.utcOffset(330).format("YYYY-MM-DD HH:mm:ss")
       : "";
 
- 
-
     const {
       workType,
       clientName,
@@ -278,7 +276,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     }
     formData.append("status", status);
     formData.append("assigned", assigned);
-    formData.append("notes", notes);
+    formData.append("notes", notes ? notes : "");
 
     try {
       const response = await fetch(

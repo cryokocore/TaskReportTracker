@@ -14,7 +14,11 @@ import {
   Avatar,
   Form,
   Spin,
+  Drawer,
+  DatePicker,
 } from "antd";
+import TextArea from "antd/es/input/TextArea";
+
 import {
   ReloadOutlined,
   SearchOutlined,
@@ -37,6 +41,7 @@ import {
   PauseCircleOutlined,
   IdcardOutlined,
   DownloadOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "./App.css";
@@ -58,6 +63,8 @@ const { Title } = Typography;
 
 const Admin = ({ username, setUser, user }) => {
   const [employeeIds, setEmployeeIds] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [employeeData, setEmployeeData] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -70,14 +77,16 @@ const Admin = ({ username, setUser, user }) => {
   const [loadingEmployeeData, setLoadingEmployeeData] = useState(false);
   const [employeeList, setEmployeeList] = useState([]);
   const [tableKey, setTableKey] = useState(0);
-
+  const [showAssignForm, setShowAssignForm] = useState(false);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const selectedEmployeeName = employeeList.find(
     (emp) => emp.id === selectedEmployee
   )?.name;
   const selectedEmployeeId = employeeList.find(
     (emp) => emp.id === selectedEmployee
   )?.id;
-
+  const [startDateTime, setStartDateTime] = useState(null);
+  const [endDateTime, setEndDateTime] = useState(null);
   // Fetch employee IDs
   useEffect(() => {
     fetchEmployeeIds();
@@ -92,11 +101,9 @@ const Admin = ({ username, setUser, user }) => {
 
       if (data.success) {
         setEmployeeList(data.data);
-
       } else {
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   // ✅ Function to fetch selected employee's task data
@@ -146,12 +153,18 @@ const Admin = ({ username, setUser, user }) => {
 
   const handleCardClick = (key) => {
     // setSelectedStatus(statusMapping[key]);
+    if (key === "assignTask") {
+      setIsDrawerVisible(true);
+      return;
+    }
+
     setSearchText(""); // ✅ Clear search text
     setIsSearchActive(false);
     setSelectedStatus((prev) =>
       prev === statusMapping[key] ? null : statusMapping[key]
     );
   };
+
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchText(value);
@@ -165,7 +178,6 @@ const Admin = ({ username, setUser, user }) => {
   };
 
   const formattedData = employeeData.map((item, index) => {
-
     if (selectedEmployee === "ST006") {
       return {
         key: index,
@@ -251,7 +263,6 @@ const Admin = ({ username, setUser, user }) => {
 
     return getValidDate(b) - getValidDate(a); // latest first
   });
-
 
   const getSocialMediaIcon = (type) => {
     switch (type) {
@@ -671,6 +682,13 @@ const Admin = ({ username, setUser, user }) => {
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
       color: white;
     }
+       .gradient-btn:disabled:hover {
+      background: #e0e0e0;     
+      opacity: 0.95;
+      color: #999999;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
     
     .gradient-text {
       background: linear-gradient(to right, #5c258d, #4389a2);
@@ -877,7 +895,6 @@ const Admin = ({ username, setUser, user }) => {
     ];
     const stats = {};
 
-    // Count occurrences of each status
     statuses.forEach((status) => {
       stats[status] = employeeData.filter(
         (item) => item["Status"] === status
@@ -918,6 +935,78 @@ const Admin = ({ username, setUser, user }) => {
     setSearchText("");
     fetchEmployeeData(selectedEmployee);
     setTableKey((prev) => prev + 1);
+  };
+  const handleSubmit = async (values, user) => {
+    setLoading(true);
+    const {
+      clientName,
+      link,
+      details,
+      startDateTime,
+      endDateTime,
+      status,
+      assigned,
+      notes,
+      employeeId // 👈 Extract employee ID selected from form
+    } = values;
+
+    if (!clientName) {
+      message.error("Client/Task Name is required.");
+      setLoading(false);
+      return;
+    }
+    if (!assigned) {
+      message.error("Assigner's Name is required.");
+      setLoading(false);
+      return;
+    }
+    if (!startDateTime || !endDateTime) {
+      message.error("Please select start and end date/time.");
+      setLoading(false);
+      return;
+    }
+    if (!employeeId) {
+      message.error("Please select an employee.");
+      setLoading(false);
+      return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append("action", "otherUserSubmit");
+    formData.append("employeeId", employeeId);
+    formData.append("clientName", clientName);
+    formData.append("link", link || "");
+    formData.append("details", details || "N/A");
+    formData.append("startDateTime", startDateTime.toISOString());
+    formData.append("endDateTime", endDateTime.toISOString());
+    formData.append("status", status);
+    formData.append("assigned", assigned);
+    formData.append("notes", notes || "");
+
+    try {
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbz2rACgfR3kzocwi1B4TR8-APifgjL0aB_I9hijq1qOsD6jJUFNGbz8uFwQDC_9zWIfKg/exec",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString(),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success) {
+        message.success("Task Assigned Successfully!");
+        form.resetFields();
+        setStartDateTime(null);
+        setEndDateTime(null);
+      } else {
+        message.error(`Error: ${result.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      message.error("An error occurred while assigning the task.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -1039,95 +1128,384 @@ const Admin = ({ username, setUser, user }) => {
               </Form.Item>
             </Col>
           </Row>
+          <>
+            <Row gutter={[16, 16]} justify="center">
+              {[
+                {
+                  label: "Total Tasks",
+                  key: "total",
+                  gradient: "linear-gradient(to right, #5913e6, #8e2de2)",
+                },
+                {
+                  label: "Completed",
+                  key: "completed",
+                  gradient: "linear-gradient(to right, #33c755, #74e974)",
+                },
+                {
+                  label: "Pending",
+                  key: "pending",
+                  gradient: "linear-gradient(to right, #f7971e, #edb053)",
+                },
+                {
+                  label: "Not Started",
+                  key: "notStarted",
+                  gradient: "linear-gradient(to right, #e15260, #ee847b)",
+                },
+                {
+                  label: "Work in Progress",
+                  key: "workinprogress",
+                  gradient: "linear-gradient(to right, #007bff, #649bee)",
+                },
 
-          <Row gutter={[16, 16]} justify="center">
-            {[
-              {
-                label: "Total Tasks",
-                key: "total",
-                gradient: "linear-gradient(to right, #5913e6, #8e2de2)",
-              },
-              {
-                label: "Completed",
-                key: "completed",
-                gradient: "linear-gradient(to right, #33c755, #74e974)",
-              },
-              {
-                label: "Pending",
-                key: "pending",
-                gradient: "linear-gradient(to right, #f7971e, #edb053)",
-              },
-              {
-                label: "Not Started",
-                key: "notStarted",
-                gradient: "linear-gradient(to right, #e15260, #ee847b)",
-              },
-              {
-                label: "Work in Progress",
-                key: "workinprogress",
-                gradient: "linear-gradient(to right, #007bff, #649bee)",
-              },
+                {
+                  label: "Under Review",
+                  key: "underReview",
+                  gradient: "linear-gradient(to right, #8e44ad, #c386db)",
+                },
+                {
+                  label: "Hold",
+                  key: "hold",
+                  gradient: "linear-gradient(to right, #6c757d, #9cb1c6)",
+                },
+                {
+                  label: "Assign Task",
+                  key: "assignTask",
+                  gradient: "linear-gradient(to right, #17ead9, #6078ea)",
+                },
+              ].map(({ label, key, gradient }) => (
+                <Col xs={24} sm={12} md={8} lg={5} key={key}>
+                  <Card
+                    className="stats-card"
+                    style={{
+                      background: gradient,
+                      minHeight: "100px", // ✅ Ensures uniform height
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      transition: "opacity 0.3s ease-in-out", // ✅ Smooth transition
 
-              {
-                label: "Under Review",
-                key: "underReview",
-                gradient: "linear-gradient(to right, #8e44ad, #c386db)",
-              },
-              {
-                label: "Hold",
-                key: "hold",
-                gradient: "linear-gradient(to right, #6c757d, #9cb1c6)",
-              },
-            ].map(({ label, key, gradient }) => (
-              <Col xs={24} sm={12} md={8} lg={5} key={key}>
-                <Card
-                  className="stats-card"
-                  style={{
-                    background: gradient,
-                    minHeight: "100px", // ✅ Ensures uniform height
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    textAlign: "center",
-                    cursor: "pointer",
-                    transition: "opacity 0.3s ease-in-out", // ✅ Smooth transition
-
-                    opacity:
-                      selectedStatus && selectedStatus !== statusMapping[key]
-                        ? 0.3
-                        : 1,
-                  }}
-                  onClick={() => handleCardClick(key)}
-                >
-                  <div
-                    className="stat-value"
-                    style={{ fontSize: "1.8rem", fontWeight: "bold" }}
+                      opacity:
+                        selectedStatus && selectedStatus !== statusMapping[key]
+                          ? 0.3
+                          : 1,
+                    }}
+                    onClick={() => handleCardClick(key)}
                   >
-                    {taskStats[key]} {/* ✅ Show actual task count */}
-                  </div>
-                  <div className="stat-title">
-                    {label} (
-                    {key !== "total"
-                      ? `${taskStats.percentages[key]}%`
-                      : "100%"}
-                    )
-                  </div>
-                  <div className="progress-bar">
                     <div
-                      className="progress-fill"
+                      className="stat-value"
+                      style={{ fontSize: "1.8rem", fontWeight: "bold" }}
+                    >
+                      {taskStats[key]} {/* ✅ Show actual task count */}
+                    </div>
+                    {/* <div className="stat-title">
+                      {label} (
+                      {key !== "total"
+                        ? `${taskStats.percentages[key]}%`
+                        : "100%"}
+                      )
+                    </div> */}
+                    <div
+                      className="stat-title"
                       style={{
-                        width:
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      {key == "assignTask" ? (
+                        <>
+                          {label} <PlusOutlined />
+                        </>
+                      ) : (
+                        `${label} (${
                           key !== "total"
                             ? `${taskStats.percentages[key]}%`
-                            : "100%",
-                      }}
-                    ></div>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+                            : "100%"
+                        })`
+                      )}
+                    </div>
+                    {/* <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{
+                          width:
+                            key !== "total"
+                              ? `${taskStats.percentages[key]}%`
+                              : "100%",
+                        }}
+                      >
+                        
+                      </div>
+                    </div> */}
+                    {key !== "assignTask" && (
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width:
+                              key !== "total"
+                                ? `${taskStats.percentages[key]}%`
+                                : "100%",
+                          }}
+                        ></div>
+                      </div>
+                    )}
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+            <Drawer
+              title="Assign New Task"
+              placement="right"
+              onClose={() => setIsDrawerVisible(false)}
+              open={isDrawerVisible}
+              destroyOnClose
+              width={1200}
+              className="mt-5 pt-5 "
+            >
+              <Form
+                layout="vertical"
+                form={form}
+                onFinish={(values) => handleSubmit(values, user)}
+                initialValues={{
+                  employeeId: user?.employeeId || undefined,
+                  status: "Pending",
+                  assigned: username,
+                }}
+              >
+                <Row gutter={16}>
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <TeamOutlined /> Client/Task Name
+                        </span>
+                      }
+                      name="clientName"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter client name",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter client name" size="large" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <>
+                          <span>
+                            <IdcardOutlined />
+                          </span>
+                          <span className="ms-1 ">
+                            Please select the employee Id
+                          </span>
+                        </>
+                      }
+                        name="employeeId"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select the employee Id",
+                        },
+                      ]}
+                    >
+                      {" "}
+                      <Spin
+                        spinning={loadingEmployeeData}
+                        className="text-center"
+                      >
+                        <Select
+                          placeholder="Select Employee"
+                          // onChange={fetchEmployeeData}
+                          size="large"
+                        >
+                          {employeeList.map((emp) => (
+                            <Option key={emp.id} value={emp.id}>
+                              {emp.id} - {emp.name}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Spin>
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} md={24}>
+                    <Row gutter={24}>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <span>
+                              <CalendarOutlined /> Start Date & Time
+                            </span>
+                          }
+                          name="startDateTime"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please select start date & time",
+                            },
+                          ]}
+                        >
+                          <DatePicker
+                            showTime
+                            style={{ width: "100%" }}
+                            size="large"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <span>
+                              <CalendarOutlined /> End Date & Time
+                            </span>
+                          }
+                          name="endDateTime"
+                          dependencies={["startDateTime"]}
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please select end date & time",
+                            },
+                            ({ getFieldValue }) => ({
+                              validator(_, value) {
+                                if (
+                                  !value ||
+                                  value.isAfter(getFieldValue("startDateTime"))
+                                ) {
+                                  return Promise.resolve();
+                                }
+                                return Promise.reject(
+                                  new Error("End date must be after start date")
+                                );
+                              },
+                            }),
+                          ]}
+                        >
+                          <DatePicker
+                            showTime
+                            style={{ width: "100%" }}
+                            size="large"
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Col>
+
+                  <Col xs={24} md={24}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <InfoCircleOutlined /> Details
+                        </span>
+                      }
+                      name="details"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter task details",
+                        },
+                      ]}
+                    >
+                      <TextArea
+                        placeholder="Enter task details"
+                        rows={3}
+                        size="large"
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <ClockCircleOutlined /> Status
+                        </span>
+                      }
+                      name="status"
+                      rules={[
+                        { required: true, message: "Please select status" },
+                      ]}
+                    >
+                      <Select placeholder="Select status" size="large" disabled>
+                        <Select.Option value="Not Started">
+                          Not Started
+                        </Select.Option>
+                        <Select.Option value="Work in Progress">
+                          Work in Progress
+                        </Select.Option>
+                        <Select.Option value="Under Review">
+                          Under Review
+                        </Select.Option>
+                        <Select.Option value="Pending">Pending</Select.Option>
+                        <Select.Option value="Hold">Hold</Select.Option>
+                        <Select.Option value="Completed">
+                          Completed
+                        </Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+
+                  {/* Assigned By */}
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <FormOutlined /> Assigned by
+                        </span>
+                      }
+                      name="assigned"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter assigner name",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter name" size="large" disabled />
+                    </Form.Item>
+                  </Col>
+
+                  {/* Notes */}
+                  <Col xs={24}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <FormOutlined /> Notes/Remarks
+                        </span>
+                      }
+                      name="notes"
+                    >
+                      <TextArea
+                        placeholder="Enter remarks"
+                        rows={2}
+                        size="large"
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} className="text-center">
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      loading={loading}
+                      className="gradient-btn px-5 py-2"
+                      size="large"
+                    >
+                      {loading ? "Assigning..." : "Assign Task"}
+                    </Button>
+                  </Col>
+                </Row>
+              </Form>
+            </Drawer>
+          </>
 
           <Col xs={24} className="mt-5">
             <Card
