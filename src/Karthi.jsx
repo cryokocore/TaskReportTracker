@@ -98,14 +98,12 @@ const KarthiTaskTracker = ({ username, setUser }) => {
   const handleLinkChange = (e) => {
     if (e.target.value) {
       const currentTime = dayjs().utcOffset(330).startOf("second");          
-      console.log("Updated DateTime:", currentTime.format("YYYY-MM-DD HH:mm:ss"));
       setLinkDateTime(currentTime);
     }
   };
 
   useEffect(() => {
     if (linkDateTime) {
-      console.log("Updated dateTime state:", linkDateTime.format("YYYY-MM-DD HH:mm:ss"));
       form.setFieldsValue({ dateTime: linkDateTime }); 
     }
   }, [linkDateTime, form]);
@@ -132,7 +130,6 @@ const KarthiTaskTracker = ({ username, setUser }) => {
         "https://script.google.com/macros/s/AKfycbxhY43Q1XMOUV7FAR5zhk3k4VE7aayMLmPBkIbZEbIbQ3ODkpPS9uI4ruv3hWY5P0DsQA/exec"
       );
       const text = await response.text();
-      console.log("Raw Response:", text);
 
       try {
         const result = JSON.parse(text);
@@ -147,7 +144,6 @@ const KarthiTaskTracker = ({ username, setUser }) => {
           return;
         }
 
-        console.log("Fetched Data:", result);
         setTableData(result);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
@@ -157,7 +153,6 @@ const KarthiTaskTracker = ({ username, setUser }) => {
         throw new Error("Invalid JSON response.");
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
       message.error("Failed to fetch data.");
       setTableData([]);
     } finally {
@@ -179,8 +174,6 @@ const KarthiTaskTracker = ({ username, setUser }) => {
       ? linkDateTime.utcOffset(330).format("YYYY-MM-DD HH:mm:ss")
       : "";
 
-    console.log("Final Sent to Google Sheets (Fixed Time):", formattedDateTime);
-    console.log("Form Values Submitted:", values);
 
     const {
       workType,

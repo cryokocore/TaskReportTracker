@@ -128,20 +128,14 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   const handleLinkChange = (e) => {
     if (e.target.value) {
       const currentTime = dayjs().utcOffset(330).startOf("second");
-      console.log(
-        "Updated DateTime:",
-        currentTime.format("YYYY-MM-DD HH:mm:ss")
-      );
+    
       setLinkDateTime(currentTime);
     }
   };
 
   useEffect(() => {
     if (linkDateTime) {
-      console.log(
-        "Updated dateTime state:",
-        linkDateTime.format("YYYY-MM-DD HH:mm:ss")
-      );
+  
       form.setFieldsValue({ dateTime: linkDateTime });
     }
   }, [linkDateTime, form]);
@@ -168,7 +162,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
         `https://script.google.com/macros/s/AKfycbz2rACgfR3kzocwi1B4TR8-APifgjL0aB_I9hijq1qOsD6jJUFNGbz8uFwQDC_9zWIfKg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
       const text = await response.text();
-      console.log("Raw Response:", text);
 
       try {
         const result = JSON.parse(text);
@@ -183,7 +176,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
           return;
         }
 
-        console.log("Fetched Data:", result);
         setTableData(result);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
@@ -193,7 +185,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
         throw new Error("Invalid JSON response.");
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
       message.error("Failed to fetch data.");
       setTableData([]);
     } finally {
@@ -217,8 +208,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       ? linkDateTime.utcOffset(330).format("YYYY-MM-DD HH:mm:ss")
       : "";
 
-    console.log("Final Sent to Google Sheets (Fixed Time):", formattedDateTime);
-    console.log("Form Values Submitted:", values);
+ 
 
     const {
       workType,

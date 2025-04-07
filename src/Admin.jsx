@@ -93,12 +93,9 @@ const Admin = ({ username, setUser, user }) => {
       if (data.success) {
         setEmployeeList(data.data);
 
-        console.log("Employee List:", data);
       } else {
-        console.error("Error fetching employee IDs:", data.message);
       }
     } catch (error) {
-      console.error("API error:", error);
     }
   };
 
@@ -113,7 +110,6 @@ const Admin = ({ username, setUser, user }) => {
         `https://script.google.com/macros/s/AKfycbz2rACgfR3kzocwi1B4TR8-APifgjL0aB_I9hijq1qOsD6jJUFNGbz8uFwQDC_9zWIfKg/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
-      console.log("Fetched Employee Data:", data);
 
       // ✅ Ensure employeeData is always an array
       if (Array.isArray(data)) {
@@ -124,13 +120,10 @@ const Admin = ({ username, setUser, user }) => {
         }
       } else if (data.success === false) {
         setEmployeeData([]); // Clear data if empty
-        console.error("No data found:", data.message);
       } else {
         setEmployeeData([]); // Fallback if unexpected response
-        console.error("Unexpected data format:", data);
       }
     } catch (error) {
-      console.error("API error:", error);
     } finally {
       setRefreshing(false);
       setLoadingEmployeeData(false);
@@ -172,7 +165,6 @@ const Admin = ({ username, setUser, user }) => {
   };
 
   const formattedData = employeeData.map((item, index) => {
-    console.log("Mapping item", item); // Add this
 
     if (selectedEmployee === "ST006") {
       return {
@@ -260,8 +252,6 @@ const Admin = ({ username, setUser, user }) => {
     return getValidDate(b) - getValidDate(a); // latest first
   });
 
-  console.log(filteredData.map((item) => item.startDateTime));
-  console.log("Formatted Data", formattedData);
 
   const getSocialMediaIcon = (type) => {
     switch (type) {

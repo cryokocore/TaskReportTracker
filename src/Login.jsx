@@ -40,7 +40,6 @@ const AuthForm = ({ setUser }) => {
 
       const text = await response.text();
       const result = JSON.parse(text);
-      console.log(result);
 
       if (result.success) {
         message.success(
@@ -59,12 +58,11 @@ const AuthForm = ({ setUser }) => {
         message.error(result.error || "Invalid Employee ID or password");
       }
     } catch (error) {
-      console.error("Error:", error);
       message.error("Unexpected response from server");
     }
     setLoading(false);
   };
-
+  
   return (
     <Container className="d-flex justify-content-center align-items-center vh-100">
       <Card

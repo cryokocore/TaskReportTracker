@@ -111,10 +111,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
   useEffect(() => {
     if (linkDateTime) {
-      console.log(
-        "Updated dateTime state:",
-        linkDateTime.format("YYYY-MM-DD HH:mm:ss")
-      );
+   
       form.setFieldsValue({ dateTime: linkDateTime });
     }
   }, [linkDateTime, form]);
@@ -137,7 +134,6 @@ const OtherUser = ({ username, setUser, user }) => {
       );
 
       const text = await response.text();
-      console.log("Raw Response:", text);
 
       try {
         const result = JSON.parse(text);
@@ -148,7 +144,6 @@ const OtherUser = ({ username, setUser, user }) => {
           return;
         }
 
-        console.log("Fetched Data:", result);
         setTableData(result);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
@@ -158,7 +153,6 @@ const OtherUser = ({ username, setUser, user }) => {
         throw new Error("Invalid JSON response.");
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
       message.error("Failed to fetch data.");
       setTableData([]);
     } finally {
@@ -170,7 +164,6 @@ const OtherUser = ({ username, setUser, user }) => {
     fetchData();
   }, []);
   useEffect(() => {
-    console.log("User state in component:", user);
   }, [user]);
 
   const handleManualRefresh = () => {
@@ -183,7 +176,6 @@ const OtherUser = ({ username, setUser, user }) => {
 
   const handleSubmit = async (values, user) => {
     setLoading(true);
-    console.log(user);
     const {
       clientName,
       link,
