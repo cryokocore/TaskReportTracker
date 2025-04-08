@@ -127,7 +127,7 @@ const KarthiTaskTracker = ({ username, setUser }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbxhY43Q1XMOUV7FAR5zhk3k4VE7aayMLmPBkIbZEbIbQ3ODkpPS9uI4ruv3hWY5P0DsQA/exec"
+        "https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec"
       );
       const text = await response.text();
 
@@ -238,7 +238,7 @@ const KarthiTaskTracker = ({ username, setUser }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbxhY43Q1XMOUV7FAR5zhk3k4VE7aayMLmPBkIbZEbIbQ3ODkpPS9uI4ruv3hWY5P0DsQA/exec",
+        "https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },

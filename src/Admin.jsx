@@ -74,11 +74,20 @@ const Admin = ({ username, setUser, user }) => {
   const isManualRefresh = useRef(false);
   const [showLogout, setShowLogout] = useState(false);
   const [form] = Form.useForm();
+  const [Defaultform] = Form.useForm();
+  const [ST006form] = Form.useForm();
+
   const [loadingEmployeeData, setLoadingEmployeeData] = useState(false);
   const [employeeList, setEmployeeList] = useState([]);
   const [tableKey, setTableKey] = useState(0);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [dropdownEmployeeId, setDropdownEmployeeId] = useState("");
+  const [defaultDropdownEmployeeId, setDefaultDropdownEmployeeId] =
+    useState("");
+
+  const [workType, setWorkType] = useState("Other");
+
   const selectedEmployeeName = employeeList.find(
     (emp) => emp.id === selectedEmployee
   )?.name;
@@ -87,7 +96,6 @@ const Admin = ({ username, setUser, user }) => {
   )?.id;
   const [startDateTime, setStartDateTime] = useState(null);
   const [endDateTime, setEndDateTime] = useState(null);
-  // Fetch employee IDs
   useEffect(() => {
     fetchEmployeeIds();
   }, []);
@@ -95,7 +103,7 @@ const Admin = ({ username, setUser, user }) => {
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbz2rACgfR3kzocwi1B4TR8-APifgjL0aB_I9hijq1qOsD6jJUFNGbz8uFwQDC_9zWIfKg/exec"
+        "https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec"
       );
       const data = await response.json();
 
@@ -106,7 +114,6 @@ const Admin = ({ username, setUser, user }) => {
     } catch (error) {}
   };
 
-  // ✅ Function to fetch selected employee's task data
   const fetchEmployeeData = async (employeeId) => {
     setRefreshing(true);
 
@@ -114,7 +121,7 @@ const Admin = ({ username, setUser, user }) => {
       setLoadingEmployeeData(true);
       setSelectedEmployee(employeeId); // Update selected employee
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbz2rACgfR3kzocwi1B4TR8-APifgjL0aB_I9hijq1qOsD6jJUFNGbz8uFwQDC_9zWIfKg/exec?employeeId=${employeeId}`
+        `https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
 
@@ -170,10 +177,10 @@ const Admin = ({ username, setUser, user }) => {
     setSearchText(value);
 
     if (value) {
-      setSelectedStatus(null); // ✅ Disable card selection when searching
-      setIsSearchActive(true); // ✅ Activate search mode
+      setSelectedStatus(null);
+      setIsSearchActive(true);
     } else {
-      setIsSearchActive(false); // ✅ Restore normal mode when search is cleared
+      setIsSearchActive(false);
     }
   };
 
@@ -233,7 +240,7 @@ const Admin = ({ username, setUser, user }) => {
           .toString()
           .toLowerCase()
           .trim()
-          .replace(/\s+/g, ""); // Normalize spaces
+          .replace(/\s+/g, "");
         const normalizedSearch = searchText
           .toLowerCase()
           .trim()
@@ -255,7 +262,6 @@ const Admin = ({ username, setUser, user }) => {
       const linkDate = item.linkPostedDateTime;
       const startDate = item.startDateTime;
 
-      // Use linkPostedDateTime if valid, else fallback to startDateTime
       const dateToUse = linkDate && linkDate !== "-" ? linkDate : startDate;
 
       return new Date(dateToUse);
@@ -691,8 +697,8 @@ const Admin = ({ username, setUser, user }) => {
     }
     
     .gradient-text {
-      background: linear-gradient(to right, #5c258d, #4389a2);
-      -webkit-background-clip: text;
+      background: linear-gradient(to right, #5c258d, #4389a2) !important;
+      -webkit-background-clip: text !important;
       color: transparent;
       font-weight: bold;
     }
@@ -861,6 +867,38 @@ const Admin = ({ username, setUser, user }) => {
     padding: 10px;
     border-radius: 0 0 8px 8px;
 }
+    .ant-drawer .ant-drawer-title {
+    flex: 1;
+    margin: 0;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 1.5;
+    background: linear-gradient(to right, #5c258d, #4389a2);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+     .ant-drawer .ant-drawer-close {
+    display: inline-flex
+;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    justify-content: center;
+    align-items: center;
+    margin-inline-end: 8px;
+    color: #dc3545;
+    font-weight: 600;
+    font-size: 16px;
+    font-style: normal;
+    line-height: 1;
+    text-align: center;
+    text-transform: none;
+    text-decoration: none;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-rendering: auto;
   `;
 
   const getTaskStats = () => {
@@ -938,6 +976,98 @@ const Admin = ({ username, setUser, user }) => {
   };
   const handleSubmit = async (values, user) => {
     setLoading(true);
+
+    const {
+      workType,
+      clientName,
+      link,
+      details,
+      socialMediaType,
+      startDateTime,
+      endDateTime,
+      status,
+      assigned,
+      notes,
+    } = values;
+
+    if (!clientName) {
+      message.error("Client Name is required.");
+      setLoading(false);
+      return;
+    }
+    if (!assigned) {
+      message.error("Assigner's Name is required.");
+      setLoading(false);
+      return;
+    }
+
+    if (workType === "Social Media") {
+      if (!socialMediaType) {
+        message.error("Please select a social media type.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (workType !== "Social Media" && (!startDateTime || !endDateTime)) {
+      message.error("Please select start and end date/time.");
+      setLoading(false);
+      return;
+    }
+
+    const formData = new URLSearchParams();
+    formData.append("action", "submit");
+    formData.append("workType", workType);
+    formData.append("clientName", clientName);
+    formData.append("details", details || "N/A");
+
+    if (workType === "Social Media") {
+      formData.append("socialMediaType", socialMediaType);
+      formData.append("startDateTime", "");
+      formData.append("endDateTime", "");
+    } else {
+      formData.append("socialMediaType", "");
+      formData.append(
+        "startDateTime",
+        startDateTime ? startDateTime.toISOString() : ""
+      );
+      formData.append(
+        "endDateTime",
+        endDateTime ? endDateTime.toISOString() : ""
+      );
+    }
+    formData.append("status", status);
+    formData.append("assigned", assigned);
+    formData.append("notes", notes ? notes : "");
+
+    try {
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString(),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success) {
+        message.success("Task Report Submitted Successfully!");
+        ST006form.resetFields();
+        Defaultform.resetFields();
+        setStartDateTime(null);
+        setEndDateTime(null);
+      } else {
+        message.error(`Error: ${result.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      message.error("An error occurred while saving data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDefaultSubmit = async (values, user) => {
+    setLoading(true);
     const {
       clientName,
       link,
@@ -947,9 +1077,10 @@ const Admin = ({ username, setUser, user }) => {
       status,
       assigned,
       notes,
-      employeeId // 👈 Extract employee ID selected from form
+      empId,
     } = values;
 
+    // console.log("Values:", values);
     if (!clientName) {
       message.error("Client/Task Name is required.");
       setLoading(false);
@@ -965,7 +1096,7 @@ const Admin = ({ username, setUser, user }) => {
       setLoading(false);
       return;
     }
-    if (!employeeId) {
+    if (!empId) {
       message.error("Please select an employee.");
       setLoading(false);
       return;
@@ -973,7 +1104,7 @@ const Admin = ({ username, setUser, user }) => {
 
     const formData = new URLSearchParams();
     formData.append("action", "otherUserSubmit");
-    formData.append("employeeId", employeeId);
+    formData.append("employeeId", empId);
     formData.append("clientName", clientName);
     formData.append("link", link || "");
     formData.append("details", details || "N/A");
@@ -985,7 +1116,7 @@ const Admin = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbz2rACgfR3kzocwi1B4TR8-APifgjL0aB_I9hijq1qOsD6jJUFNGbz8uFwQDC_9zWIfKg/exec",
+        "https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -996,7 +1127,8 @@ const Admin = ({ username, setUser, user }) => {
       const result = await response.json();
       if (result.success) {
         message.success("Task Assigned Successfully!");
-        form.resetFields();
+        ST006form.resetFields();
+        Defaultform.resetFields();
         setStartDateTime(null);
         setEndDateTime(null);
       } else {
@@ -1008,10 +1140,45 @@ const Admin = ({ username, setUser, user }) => {
       setLoading(false);
     }
   };
+  // useEffect(() => {
+  //   const empId = form.getFieldValue("empId");
+  //   setDropdownEmployeeId(empId);
+  // }, [ST006form.getFieldValue("empId")]);
+
+  // const handleEmployeeChange = (value) => {
+  //   form.resetFields();
+  //   setDropdownEmployeeId(value);
+  //   form.setFieldsValue({ empId: value });
+  // };
+  useEffect(() => {
+    if (dropdownEmployeeId) {
+      ST006form.resetFields();
+      Defaultform.resetFields();
+      ST006form.setFieldsValue({ empId: dropdownEmployeeId });
+      Defaultform.setFieldsValue({ empId: dropdownEmployeeId });
+    }
+  }, [dropdownEmployeeId]);
+
+  // useEffect(() => {
+  //   if (dropdownEmployeeId === "ST006") {
+  //     Defaultform.resetFields();
+  //   } else {
+  //     ST006form.resetFields();
+  //   }
+  // }, [dropdownEmployeeId]);
+
+  useEffect(() => {
+    if (!isDrawerVisible) {
+      ST006form.resetFields();
+      Defaultform.resetFields();
+      setDropdownEmployeeId(undefined);
+      setStartDateTime(null);
+      setEndDateTime(null);
+    }
+  }, [isDrawerVisible]);
 
   return (
     <div className="container-fluid p-0">
-      {" "}
       <style>{customStyles}</style>
       <Layout className="min-vh-100">
         <Navbar fixed="top" className="header-gradient  py-3">
@@ -1170,7 +1337,8 @@ const Admin = ({ username, setUser, user }) => {
                 {
                   label: "Assign Task",
                   key: "assignTask",
-                  gradient: "linear-gradient(to right, #17ead9, #6078ea)",
+                  gradient:
+                    "linear-gradient(to right, rgb(23 234 140), rgb(96, 120, 234))",
                 },
               ].map(({ label, key, gradient }) => (
                 <Col xs={24} sm={12} md={8} lg={5} key={key}>
@@ -1178,7 +1346,7 @@ const Admin = ({ username, setUser, user }) => {
                     className="stats-card"
                     style={{
                       background: gradient,
-                      minHeight: "100px", // ✅ Ensures uniform height
+                      minHeight: "100px",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -1198,15 +1366,9 @@ const Admin = ({ username, setUser, user }) => {
                       className="stat-value"
                       style={{ fontSize: "1.8rem", fontWeight: "bold" }}
                     >
-                      {taskStats[key]} {/* ✅ Show actual task count */}
+                      {taskStats[key]}
                     </div>
-                    {/* <div className="stat-title">
-                      {label} (
-                      {key !== "total"
-                        ? `${taskStats.percentages[key]}%`
-                        : "100%"}
-                      )
-                    </div> */}
+
                     <div
                       className="stat-title"
                       style={{
@@ -1218,7 +1380,19 @@ const Admin = ({ username, setUser, user }) => {
                     >
                       {key == "assignTask" ? (
                         <>
-                          {label} <PlusOutlined />
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                          >
+                            <PlusOutlined style={{ fontSize: "40px" }} />{" "}
+                            <span className="mt-2" style={{ fontSize: "20px" }}>
+                              {label}
+                            </span>{" "}
+                          </div>
                         </>
                       ) : (
                         `${label} (${
@@ -1228,19 +1402,7 @@ const Admin = ({ username, setUser, user }) => {
                         })`
                       )}
                     </div>
-                    {/* <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width:
-                            key !== "total"
-                              ? `${taskStats.percentages[key]}%`
-                              : "100%",
-                        }}
-                      >
-                        
-                      </div>
-                    </div> */}
+
                     {key !== "assignTask" && (
                       <div className="progress-bar">
                         <div
@@ -1265,66 +1427,44 @@ const Admin = ({ username, setUser, user }) => {
               open={isDrawerVisible}
               destroyOnClose
               width={1200}
-              className="mt-5 pt-5 "
+              zIndex={1200}
             >
-              <Form
-                layout="vertical"
-                form={form}
-                onFinish={(values) => handleSubmit(values, user)}
-                initialValues={{
-                  employeeId: user?.employeeId || undefined,
-                  status: "Pending",
-                  assigned: username,
-                }}
-              >
-                <Row gutter={16}>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <span>
-                          <TeamOutlined /> Client/Task Name
-                        </span>
-                      }
-                      name="clientName"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter client name",
-                        },
-                      ]}
-                    >
-                      <Input placeholder="Enter client name" size="large" />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <>
-                          <span>
+              {dropdownEmployeeId === "ST006" ? (
+                <Form
+                  layout="vertical"
+                  form={ST006form}
+                  onFinish={(values) => handleSubmit(values, user)}
+                  initialValues={{
+                    employeeId: user?.employeeId || undefined,
+                    status: "Pending",
+                    assigned: username,
+                    // empId: dropdownEmployeeId,
+                  }}
+                >
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <>
                             <IdcardOutlined />
-                          </span>
-                          <span className="ms-1 ">
-                            Please select the employee Id
-                          </span>
-                        </>
-                      }
-                        name="employeeId"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select the employee Id",
-                        },
-                      ]}
-                    >
-                      {" "}
-                      <Spin
-                        spinning={loadingEmployeeData}
-                        className="text-center"
+                            <span className="ms-1">Select Employee</span>
+                          </>
+                        }
+                        name="empId"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select the employee Id",
+                          },
+                        ]}
                       >
                         <Select
                           placeholder="Select Employee"
-                          // onChange={fetchEmployeeData}
                           size="large"
+                          value={dropdownEmployeeId}
+                          onChange={(value) => {
+                            setDropdownEmployeeId(value);
+                          }}
                         >
                           {employeeList.map((emp) => (
                             <Option key={emp.id} value={emp.id}>
@@ -1332,178 +1472,521 @@ const Admin = ({ username, setUser, user }) => {
                             </Option>
                           ))}
                         </Select>
-                      </Spin>
-                    </Form.Item>
-                  </Col>
+                      </Form.Item>
+                    </Col>
 
-                  <Col xs={24} md={24}>
-                    <Row gutter={24}>
-                      <Col xs={24} md={12}>
-                        <Form.Item
-                          label={
-                            <span>
-                              <CalendarOutlined /> Start Date & Time
-                            </span>
-                          }
-                          name="startDateTime"
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please select start date & time",
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Work Type
+                          </span>
+                        }
+                        initialValue="Other"
+                        name="workType"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select your work type",
+                          },
+                        ]}
+                      >
+                        <Input size="large" disabled />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={24}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <TeamOutlined /> Client Name/Task Name
+                          </span>
+                        }
+                        name="clientName"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter client name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter client name" size="large" />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <CalendarOutlined /> Start Date & Time
+                          </span>
+                        }
+                        name="startDateTime"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select start date & time",
+                          },
+                        ]}
+                      >
+                        <DatePicker
+                          showTime
+                          value={startDateTime}
+                          onChange={(value) => setStartDateTime(value)}
+                          style={{ width: "100%" }}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <CalendarOutlined /> End Date & Time
+                          </span>
+                        }
+                        name="endDateTime"
+                        dependencies={["startDateTime"]}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select end date & time",
+                          },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              if (
+                                !value ||
+                                value.isAfter(getFieldValue("startDateTime"))
+                              ) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(
+                                new Error(
+                                  "End date & time must be after start date & time"
+                                )
+                              );
                             },
-                          ]}
+                          }),
+                        ]}
+                      >
+                        <DatePicker
+                          showTime
+                          value={endDateTime}
+                          onChange={(value) => setEndDateTime(value)}
+                          style={{ width: "100%" }}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <InfoCircleOutlined /> Details
+                          </span>
+                        }
+                        name="details"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter the details",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the task details"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                        rules={[
+                          {
+                            required: false,
+                            message: "Please enter the Notes/Remarks",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the notes/remarks"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select status of work",
+                          },
+                        ]}
+                      >
+                        <Select
+                          placeholder="Select status"
+                          size="large"
+                          disabled
                         >
-                          <DatePicker
-                            showTime
-                            style={{ width: "100%" }}
-                            size="large"
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={12}>
-                        <Form.Item
-                          label={
-                            <span>
-                              <CalendarOutlined /> End Date & Time
-                            </span>
-                          }
-                          name="endDateTime"
-                          dependencies={["startDateTime"]}
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please select end date & time",
-                            },
-                            ({ getFieldValue }) => ({
-                              validator(_, value) {
-                                if (
-                                  !value ||
-                                  value.isAfter(getFieldValue("startDateTime"))
-                                ) {
-                                  return Promise.resolve();
-                                }
-                                return Promise.reject(
-                                  new Error("End date must be after start date")
-                                );
+                          <Select.Option value="Not Started">
+                            <ClockCircleOutlined style={{ color: "red" }} /> Not
+                            Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            <ClockCircleOutlined style={{ color: "blue" }} />{" "}
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            <InfoCircleOutlined style={{ color: "purple" }} />{" "}
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">
+                            <ClockCircleOutlined style={{ color: "orange" }} />{" "}
+                            Pending
+                          </Select.Option>
+                          <Select.Option value="Hold">
+                            <ClockCircleOutlined style={{ color: "gray" }} />{" "}
+                            Hold
+                          </Select.Option>
+                          <Select.Option value="Completed">
+                            <CheckCircleOutlined style={{ color: "green" }} />{" "}
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Assigned by
+                          </span>
+                        }
+                        name="assigned"
+                        rules={[
+                          {
+                            required: true,
+                            message:
+                              "Please enter the name of the task assigner",
+                          },
+                        ]}
+                      >
+                        <Input
+                          placeholder="Enter the name of the task assigner"
+                          size="large"
+                          disabled
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} className="text-center mt-3">
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={loading}
+                        className="gradient-btn px-5 py-2"
+                        style={{ fontSize: "16px", height: "auto" }}
+                        size="large"
+                      >
+                        {loading ? "Assigning..." : "Assign Task"}
+                      </Button>
+                      <Button
+                        color="danger" variant="solid"
+                        className=" px-5 py-2 ms-2"
+                        size="large"
+                        onClick={() => {
+                          ST006form.resetFields();
+                          Defaultform.resetFields();
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </Col>
+                  </Row>
+                </Form>
+              ) : (
+                <Form
+                  layout="vertical"
+                  form={Defaultform}
+                  onFinish={(values) => handleDefaultSubmit(values, user)}
+                  initialValues={{
+                    employeeId: user?.employeeId || undefined,
+                    status: "Pending",
+                    assigned: username,
+                    // empId: dropdownEmployeeId,
+                  }}
+                >
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <>
+                            <IdcardOutlined />
+                            <span className="ms-1">Select Employee</span>
+                          </>
+                        }
+                        name="empId"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select the employee Id",
+                          },
+                        ]}
+                      >
+                        <Select
+                          placeholder="Select Employee"
+                          size="large"
+                          value={dropdownEmployeeId}
+                          onChange={(value) => {
+                            setDropdownEmployeeId(value);
+                            Defaultform.setFieldsValue({ empId: value });
+                          }}
+                        >
+                          {employeeList.map((emp) => (
+                            <Option key={emp.id} value={emp.id}>
+                              {emp.id} - {emp.name}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <TeamOutlined /> Client/Task Name
+                          </span>
+                        }
+                        name="clientName"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter client name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter client name" size="large" />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={24}>
+                      <Row gutter={24}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> Start Date & Time
+                              </span>
+                            }
+                            name="startDateTime"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select start date & time",
                               },
-                            }),
-                          ]}
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> End Date & Time
+                              </span>
+                            }
+                            name="endDateTime"
+                            dependencies={["startDateTime"]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select end date & time",
+                              },
+                              ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                  if (
+                                    !value ||
+                                    value.isAfter(
+                                      getFieldValue("startDateTime")
+                                    )
+                                  ) {
+                                    return Promise.resolve();
+                                  }
+                                  return Promise.reject(
+                                    new Error(
+                                      "End date must be after start date"
+                                    )
+                                  );
+                                },
+                              }),
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <InfoCircleOutlined /> Details
+                          </span>
+                        }
+                        name="details"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter task details",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter task details"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                      >
+                        <TextArea
+                          placeholder="Enter the notes/remarks"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select status of work",
+                          },
+                        ]}
+                      >
+                        <Select
+                          placeholder="Select status"
+                          size="large"
+                          disabled
                         >
-                          <DatePicker
-                            showTime
-                            style={{ width: "100%" }}
-                            size="large"
-                          />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-                  </Col>
+                          <Select.Option value="Not Started">
+                            <ClockCircleOutlined style={{ color: "red" }} /> Not
+                            Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            <ClockCircleOutlined style={{ color: "blue" }} />{" "}
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            <InfoCircleOutlined style={{ color: "purple" }} />{" "}
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">
+                            <ClockCircleOutlined style={{ color: "orange" }} />{" "}
+                            Pending
+                          </Select.Option>
+                          <Select.Option value="Hold">
+                            <ClockCircleOutlined style={{ color: "gray" }} />{" "}
+                            Hold
+                          </Select.Option>
+                          <Select.Option value="Completed">
+                            <CheckCircleOutlined style={{ color: "green" }} />{" "}
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
 
-                  <Col xs={24} md={24}>
-                    <Form.Item
-                      label={
-                        <span>
-                          <InfoCircleOutlined /> Details
-                        </span>
-                      }
-                      name="details"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter task details",
-                        },
-                      ]}
-                    >
-                      <TextArea
-                        placeholder="Enter task details"
-                        rows={3}
+                    {/* Assigned By */}
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Assigned by
+                          </span>
+                        }
+                        name="assigned"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter assigner name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter name" size="large" disabled />
+                      </Form.Item>
+                    </Col>
+
+                    {/* Notes */}
+
+                    <Col xs={24} className="text-center">
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={loading}
+                        className="gradient-btn px-5 py-2"
                         size="large"
-                      />
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <span>
-                          <ClockCircleOutlined /> Status
-                        </span>
-                      }
-                      name="status"
-                      rules={[
-                        { required: true, message: "Please select status" },
-                      ]}
-                    >
-                      <Select placeholder="Select status" size="large" disabled>
-                        <Select.Option value="Not Started">
-                          Not Started
-                        </Select.Option>
-                        <Select.Option value="Work in Progress">
-                          Work in Progress
-                        </Select.Option>
-                        <Select.Option value="Under Review">
-                          Under Review
-                        </Select.Option>
-                        <Select.Option value="Pending">Pending</Select.Option>
-                        <Select.Option value="Hold">Hold</Select.Option>
-                        <Select.Option value="Completed">
-                          Completed
-                        </Select.Option>
-                      </Select>
-                    </Form.Item>
-                  </Col>
-
-                  {/* Assigned By */}
-                  <Col xs={24} md={12}>
-                    <Form.Item
-                      label={
-                        <span>
-                          <FormOutlined /> Assigned by
-                        </span>
-                      }
-                      name="assigned"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter assigner name",
-                        },
-                      ]}
-                    >
-                      <Input placeholder="Enter name" size="large" disabled />
-                    </Form.Item>
-                  </Col>
-
-                  {/* Notes */}
-                  <Col xs={24}>
-                    <Form.Item
-                      label={
-                        <span>
-                          <FormOutlined /> Notes/Remarks
-                        </span>
-                      }
-                      name="notes"
-                    >
-                      <TextArea
-                        placeholder="Enter remarks"
-                        rows={2}
+                      >
+                        {loading ? "Assigning..." : "Assign Task"}
+                      </Button>
+                      <Button
+                        color="danger" variant="solid"
+                        className=" px-5 py-2 ms-2"
                         size="large"
-                      />
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={24} className="text-center">
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      loading={loading}
-                      className="gradient-btn px-5 py-2"
-                      size="large"
-                    >
-                      {loading ? "Assigning..." : "Assign Task"}
-                    </Button>
-                  </Col>
-                </Row>
-              </Form>
+                        onClick={() => {
+                          ST006form.resetFields();
+                          Defaultform.resetFields();
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </Col>
+                  </Row>
+                </Form>
+              )}
             </Drawer>
           </>
 
