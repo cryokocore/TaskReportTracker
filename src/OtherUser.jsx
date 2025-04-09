@@ -17,6 +17,7 @@ import {
   Col,
   Typography,
   Statistic,
+  Modal,
 } from "antd";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "antd/dist/reset.css";
@@ -46,6 +47,7 @@ import {
   SyncOutlined,
   PauseCircleOutlined,
   DownloadOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -73,6 +75,7 @@ message.config({
 
 const OtherUser = ({ username, setUser, user }) => {
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [dateTime, setDateTime] = useState(null);
   const [linkDateTime, setLinkDateTime] = useState(null);
@@ -89,6 +92,43 @@ const OtherUser = ({ username, setUser, user }) => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [tableKey, setTableKey] = useState(0);
   const employeeId = user?.employeeId;
+  const [editingTask, setEditingTask] = useState(null);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [dropdownEmployeeId, setDropdownEmployeeId] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [formatData, setFormatData] = useState([]);
+  const [isUpdateLoading, setIsUpdateLoading] = useState(false);
+  const [updateButton, setUpdateButton] = useState(false);
+
+  const onFormChange = (changedValues, allValues) => {
+    setEditingRecord((prev) => ({
+      ...prev,
+      ...allValues,
+    }));
+  };
+
+  useEffect(() => {
+    if (isModalVisible && editingRecord) {
+      const updatedValues = {
+        ...editingRecord,
+        startDateTime: dayjs(editingRecord.startDateTime),
+        endDateTime: dayjs(editingRecord.endDateTime),
+      };
+      editForm.setFieldsValue(updatedValues);
+    }
+  }, [isModalVisible, editingRecord]);
+
+  const handleSave = () => {
+    const updatedData = formattedData.map((item) =>
+      item.key === editingRecord.key ? editingRecord : item
+    );
+
+    // Update the source, if it's coming from props/state
+    setFormatData(updatedData);
+
+    setIsModalVisible(false);
+  };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -111,7 +151,6 @@ const OtherUser = ({ username, setUser, user }) => {
 
   useEffect(() => {
     if (linkDateTime) {
-   
       form.setFieldsValue({ dateTime: linkDateTime });
     }
   }, [linkDateTime, form]);
@@ -130,7 +169,7 @@ const OtherUser = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
 
       const text = await response.text();
@@ -145,6 +184,9 @@ const OtherUser = ({ username, setUser, user }) => {
         }
 
         setTableData(result);
+        // console.log("Result", result);
+
+        // setTableData(result);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
           isManualRefresh.current = false;
@@ -163,8 +205,7 @@ const OtherUser = ({ username, setUser, user }) => {
   useEffect(() => {
     fetchData();
   }, []);
-  useEffect(() => {
-  }, [user]);
+  useEffect(() => {}, [user]);
 
   const handleManualRefresh = () => {
     isManualRefresh.current = true;
@@ -206,7 +247,6 @@ const OtherUser = ({ username, setUser, user }) => {
     const formData = new URLSearchParams();
     formData.append("action", "otherUserSubmit");
     formData.append("employeeId", user.employeeId);
-
     formData.append("clientName", clientName);
     formData.append("link", link || "");
     formData.append("details", details || "N/A");
@@ -218,7 +258,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec",
+        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -243,6 +283,68 @@ const OtherUser = ({ username, setUser, user }) => {
     }
   };
 
+  const handleUpdate = async (values) => {
+    setIsUpdateLoading(true);
+
+    const rowIndex = editingTask?.rowIndex;
+    // console.log(rowIndex);
+    if (!rowIndex) {
+      message.error("Missing row index for update.");
+      setIsUpdateLoading(false);
+      return;
+    }
+
+    const {
+      clientName,
+      link,
+      details,
+      startDateTime,
+      endDateTime,
+      status,
+      assigned,
+      notes,
+    } = values;
+    // console.log("Values:", values);
+    const formData = new URLSearchParams();
+    formData.append("action", "updateTask");
+    formData.append("employeeId", user.employeeId);
+    formData.append("rowIndex", rowIndex); // 🔑 critical value
+    formData.append("clientName", clientName);
+    formData.append("link", link || "");
+    formData.append("details", details || "");
+    formData.append("startDateTime", startDateTime.toISOString());
+    formData.append("endDateTime", endDateTime.toISOString());
+    formData.append("status", status);
+    formData.append("assigned", assigned);
+    formData.append("notes", notes || "");
+
+    try {
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString(),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success) {
+        message.success("Task Updated Successfully!");
+        setIsModalVisible(false);
+        editForm.resetFields();
+        setEditingTask(null);
+        fetchData(); // refresh table
+      } else {
+        message.error(`Update failed: ${result.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      message.error("An error occurred during update.");
+    } finally {
+      setIsUpdateLoading(false);
+    }
+  };
+
   const formattedData = tableData.map((item, index) => {
     const cleanedItem = Object.keys(item).reduce((acc, key) => {
       acc[key.trim()] = item[key]; // Trim column names to match correctly
@@ -251,6 +353,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     return {
       key: index,
+      rowIndex: item.rowIndex,
       clientName: cleanedItem["Client/Task Name"]?.trim(),
       startDateTime: cleanedItem["Start Date & Time"]
         ? dayjs(cleanedItem["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
@@ -333,7 +436,12 @@ const OtherUser = ({ username, setUser, user }) => {
       const dateA = new Date(a.startDateTime.replace(/-/g, "/"));
       const dateB = new Date(b.startDateTime.replace(/-/g, "/"));
       return dateB - dateA; // Latest first
-    });
+    })
+    .map((item, idx) => ({
+      ...item,
+      displayIndex: idx,
+    }));
+  // console.log("Sorted Data", sortedData);
 
   const handleExport = () => {
     const exportData = filteredData.map(({ key, ...rest }) => {
@@ -413,7 +521,7 @@ const OtherUser = ({ username, setUser, user }) => {
     worksheet["!cols"] = maxWidths.map((w) => ({ wch: w + 5 })); // +5 for padding
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Filtered Tasks");
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${employeeId}-${username}`);
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -513,7 +621,37 @@ const OtherUser = ({ username, setUser, user }) => {
       width: 250,
       render: (text) => <Tooltip title={text}>{text}</Tooltip>,
     },
+    {
+      title: "Action",
+      key: "action",
+      width: 100,
+      fixed: "right",
+      render: (_, record) => (
+        <Button
+          color="primary"
+          variant="filled"
+          onClick={() => handleEdit(record, record.rowIndex)}
+        >
+          <EditOutlined />
+          Edit
+        </Button>
+      ),
+    },
   ];
+
+  const handleEdit = (record, index) => {
+    setEditingTask({ ...record, rowIndex: index });
+    // console.log("Record:", record);
+    // console.log("Index:", index);
+
+    setIsModalVisible(true);
+
+    editForm.setFieldsValue({
+      ...record,
+      startDateTime: dayjs(record.startDateTime),
+      endDateTime: dayjs(record.endDateTime),
+    });
+  };
 
   const getTaskStats = () => {
     if (!tableData || tableData.length === 0) {
@@ -801,6 +939,16 @@ const OtherUser = ({ username, setUser, user }) => {
     padding: 10px;
     border-radius: 0 0 8px 8px;
 }
+    .ant-modal .ant-modal-title {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.88);
+    font-weight: bold;
+    font-size: 20px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    color: #1B75BC;
+    }
+
   `;
 
   return (
@@ -1109,7 +1257,19 @@ const OtherUser = ({ username, setUser, user }) => {
                         className="gradient-btn px-5 py-2"
                         size="large"
                       >
-                        {loading ? "Submitting..." : "Submit Task Report"}
+                        {loading ? "Submitting..." : "Submit Task "}
+                      </Button>
+                      <Button
+                        color="danger"
+                        variant="solid"
+                        className=" px-5 py-2 ms-2"
+                        size="large"
+                        onClick={() => {
+                          form.resetFields();
+                          message.success("Form data cleared successfully");
+                        }}
+                      >
+                        Clear
                       </Button>
                     </Col>
                   </Row>
@@ -1263,7 +1423,7 @@ const OtherUser = ({ username, setUser, user }) => {
                   key={tableKey}
                   dataSource={sortedData}
                   columns={columns}
-                  rowKey={(record) => record.key}
+                  rowKey="key"
                   pagination={{
                     pageSize: 10,
                     showTotal: (total, range) =>
@@ -1276,6 +1436,244 @@ const OtherUser = ({ username, setUser, user }) => {
                   className="mt-2"
                 />
               </Card>
+            </Col>
+
+            <Col xs={24}>
+              <Modal
+                title="Edit Task Data"
+                className="fw-bold"
+                open={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
+                footer={null}
+                width={1200}
+              >
+                <Form
+                  layout="vertical"
+                  form={editForm}
+                  onFinish={(values) => handleUpdate(values, user)}
+                >
+                  <Form.Item name="rowIndex" hidden>
+                    <Input />
+                  </Form.Item>
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <TeamOutlined /> Client/Task Name
+                          </span>
+                        }
+                        name="clientName"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter client name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter client name" size="large" />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> Start Date & Time
+                              </span>
+                            }
+                            name="startDateTime"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select start date & time",
+                              },
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> End Date & Time
+                              </span>
+                            }
+                            name="endDateTime"
+                            dependencies={["startDateTime"]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select end date & time",
+                              },
+                              ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                  if (
+                                    !value ||
+                                    value.isAfter(
+                                      getFieldValue("startDateTime")
+                                    )
+                                  ) {
+                                    return Promise.resolve();
+                                  }
+                                  return Promise.reject(
+                                    new Error(
+                                      "End date must be after start date"
+                                    )
+                                  );
+                                },
+                              }),
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <InfoCircleOutlined /> Details
+                          </span>
+                        }
+                        name="details"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter task details",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter task details"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <LinkOutlined /> Link
+                          </span>
+                        }
+                        name="link"
+                      >
+                        <TextArea
+                          placeholder="Enter link (optional)"
+                          rows={1}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          { required: true, message: "Please select status" },
+                        ]}
+                      >
+                        <Select placeholder="Select status" size="large">
+                          <Select.Option value="Not Started">
+                            Not Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">Pending</Select.Option>
+                          <Select.Option value="Hold">Hold</Select.Option>
+                          <Select.Option value="Completed">
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+
+                    {/* Assigned By */}
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Assigned by
+                          </span>
+                        }
+                        name="assigned"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter assigner name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter name" size="large" />
+                      </Form.Item>
+                    </Col>
+
+                    {/* Notes */}
+                    <Col xs={24}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                      >
+                        <TextArea
+                          placeholder="Enter remarks"
+                          rows={2}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} className="text-center">
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={isUpdateLoading}
+                        className="gradient-btn px-5 py-2"
+                        size="large"
+                      >
+                        {isUpdateLoading ? "Updating..." : "Update Task"}
+                      </Button>
+                      <Button
+                        color="danger"
+                        variant="solid"
+                        size="large"
+                        onClick={() => setIsModalVisible(false)}
+                        className="ms-2 px-5 py-2"
+                      >
+                        Cancel
+                      </Button>
+                    </Col>
+                  </Row>
+                </Form>
+              </Modal>
             </Col>
           </Row>
         </Content>

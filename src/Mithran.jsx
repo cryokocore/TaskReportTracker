@@ -17,6 +17,7 @@ import {
   Col,
   Typography,
   Statistic,
+  Modal,
 } from "antd";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "antd/dist/reset.css";
@@ -32,6 +33,7 @@ import {
   FileAddOutlined,
   CalendarOutlined,
   TeamOutlined,
+  EditOutlined,
   LinkOutlined,
   FormOutlined,
   CheckCircleOutlined,
@@ -88,6 +90,10 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [tableKey, setTableKey] = useState(0);
+  const [editingTask, setEditingTask] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editForm] = Form.useForm();
+  const [isUpdateLoading, setIsUpdateLoading] = useState(false);
 
   const getSocialMediaIcon = (type) => {
     switch (type) {
@@ -128,14 +134,13 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   const handleLinkChange = (e) => {
     if (e.target.value) {
       const currentTime = dayjs().utcOffset(330).startOf("second");
-    
       setLinkDateTime(currentTime);
+      editForm.setFieldsValue({ dateTime: currentTime });
     }
   };
 
   useEffect(() => {
     if (linkDateTime) {
-  
       form.setFieldsValue({ dateTime: linkDateTime });
     }
   }, [linkDateTime, form]);
@@ -159,12 +164,13 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
       const text = await response.text();
 
       try {
         const result = JSON.parse(text);
+        // console.log("Result:", result);
 
         if (
           result.success === false ||
@@ -177,6 +183,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
         }
 
         setTableData(result);
+        // console.log("Result:", result);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
           isManualRefresh.current = false; // Reset after showing message
@@ -280,7 +287,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbxyxU2wtgqxti5ZQgguuhCCovD7tF1ZK6IaFJkM7vMvuD0y5nIds_z-pNgYtleLD-EL7Q/exec",
+        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -306,8 +313,91 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     }
   };
 
+  const handleUpdate = async (values) => {
+    setIsUpdateLoading(true);
+    const formattedDateTime = linkDateTime
+      ? linkDateTime.utcOffset(330).format("YYYY-MM-DD HH:mm:ss")
+      : "";
+
+    const rowIndex = editingTask?.rowIndex;
+    // console.log(rowIndex);
+    if (!rowIndex) {
+      message.error("Missing row index for update.");
+      setIsUpdateLoading(false);
+      return;
+    }
+
+    const {
+      workType,
+      clientName,
+      link,
+      details,
+      socialMediaType,
+      startDateTime,
+      endDateTime,
+      status,
+      assigned,
+      notes,
+    } = values;
+    // console.log("Values:", values);
+    const formData = new URLSearchParams();
+    formData.append("action", "st006UpdateTask");
+
+    formData.append("rowIndex", rowIndex); // 🔑 critical value
+    formData.append("workType", workType);
+    formData.append("clientName", clientName);
+    formData.append("link", workType === "Social Media" ? link : "");
+    formData.append("details", details || "N/A");
+    formData.append("dateTime", formattedDateTime || "N/A");
+
+    if (workType === "Social Media") {
+      formData.append("socialMediaType", socialMediaType);
+      formData.append("startDateTime", "");
+      formData.append("endDateTime", "");
+    } else {
+      formData.append("socialMediaType", "");
+      formData.append(
+        "startDateTime",
+        startDateTime ? startDateTime.toISOString() : ""
+      );
+      formData.append(
+        "endDateTime",
+        endDateTime ? endDateTime.toISOString() : ""
+      );
+    }
+    formData.append("status", status);
+    formData.append("assigned", assigned);
+    formData.append("notes", notes ? notes : "");
+
+    try {
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString(),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success) {
+        message.success("Task Updated Successfully!");
+        setIsModalVisible(false);
+        editForm.resetFields();
+        setEditingTask(null);
+        fetchData(); // refresh table
+      } else {
+        message.error(`Update failed: ${result.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      message.error("An error occurred during update.");
+    } finally {
+      setIsUpdateLoading(false);
+    }
+  };
   const formattedData = tableData.map((item, index) => ({
     key: index,
+    rowIndex: item.rowIndex,
     workType: item["Work Type"]?.trim(),
     clientName: item["Client Name"]?.trim(),
     startDateTime: item["Start Date & Time"]
@@ -382,19 +472,26 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       );
     }
   });
-  const sortedData = [...filteredData].sort((a, b) => {
-    const getValidDate = (item) => {
-      const linkDate = item.linkPostedDateTime;
-      const startDate = item.startDateTime;
+  const sortedData = [...filteredData]
+    .sort((a, b) => {
+      const getValidDate = (item) => {
+        const linkDate = item.linkPostedDateTime;
+        const startDate = item.startDateTime;
 
-      // Use linkPostedDateTime if valid, else fallback to startDateTime
-      const dateToUse = linkDate && linkDate !== "-" ? linkDate : startDate;
+        // Use linkPostedDateTime if valid, else fallback to startDateTime
+        const dateToUse = linkDate && linkDate !== "-" ? linkDate : startDate;
 
-      return new Date(dateToUse);
-    };
+        return new Date(dateToUse);
+      };
 
-    return getValidDate(b) - getValidDate(a); // latest first
-  });
+      return getValidDate(b) - getValidDate(a); // latest first
+    })
+    .map((item, idx) => ({
+      ...item,
+      displayIndex: idx,
+    }));
+  // console.log("Sorted Data", sortedData);
+
   const columns = [
     {
       title: "Work Type",
@@ -548,7 +645,65 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
         );
       },
     },
+    {
+      title: "Action",
+      key: "action",
+      width: 100,
+      fixed: "right",
+      render: (_, record) => (
+        <Button
+          color="primary"
+          variant="filled"
+          onClick={() => handleEdit(record, record.rowIndex)}
+        >
+          <EditOutlined />
+          Edit
+        </Button>
+      ),
+    },
   ];
+  // const handleEdit = (record, index) => {
+  //   setEditingTask({ ...record, rowIndex: index });
+  //   console.log("Record:", record);
+  //   console.log("Index:", index);
+
+  //   setIsModalVisible(true);
+
+  //   editForm.setFieldsValue({
+  //     ...record,
+  //     startDateTime: dayjs(record.startDateTime),
+  //     endDateTime: dayjs(record.endDateTime),
+  //     dateTime: record.linkPostedDateTime,
+  //   });
+  // };
+
+  const handleEdit = (record, index) => {
+    setEditingTask({ ...record, rowIndex: index });
+    // console.log("Record:", record);
+    // console.log("Index:", index);
+    setIsModalVisible(true);
+    editForm.setFieldsValue({
+      ...record,
+      startDateTime:
+        record.startDateTime && record.startDateTime !== "-"
+          ? dayjs(record.startDateTime)
+          : null,
+      endDateTime:
+        record.endDateTime && record.endDateTime !== "-"
+          ? dayjs(record.endDateTime)
+          : null,
+      dateTime:
+        record.linkPostedDateTime && record.linkPostedDateTime !== "-"
+          ? dayjs(record.linkPostedDateTime)
+          : null,
+    });
+    setWorkType(record.workType); // <-- IMPORTANT
+    setLinkDateTime(record.dateTime || null); // if you're using it
+    setStartDateTime(record.startDateTime || null);
+    setEndDateTime(record.endDateTime || null);
+  
+    setIsModalVisible(true);
+  };
 
   const getTaskStats = () => {
     if (!tableData || tableData.length === 0) {
@@ -929,6 +1084,19 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     padding: 10px;
     border-radius: 0 0 8px 8px;
 }
+     .ant-modal .ant-modal-title {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.88);
+    font-weight: bold;
+    font-size: 20px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    color: #1B75BC;
+    }
+    .ant-form-item .ant-form-item-explain-error {
+    color: #ff4d4f;
+    font-weight: 400;
+}
   `;
 
   return (
@@ -1256,6 +1424,96 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                       <Form.Item
                         label={
                           <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                        rules={[
+                          {
+                            required: false,
+                            message: "Please enter the Notes/Remarks",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the notes/remarks"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    {/* <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select status of work",
+                          },
+                        ]}
+                      >
+                        <Select placeholder="Select status" size="large">
+                          <Select.Option value="Not Started">
+                            <ClockCircleOutlined style={{ color: "red" }} /> Not
+                            Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            <ClockCircleOutlined style={{ color: "blue" }} />{" "}
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            <InfoCircleOutlined style={{ color: "purple" }} />{" "}
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">
+                            <ClockCircleOutlined style={{ color: "orange" }} />{" "}
+                            Pending
+                          </Select.Option>
+                          <Select.Option value="Hold">
+                            <ClockCircleOutlined style={{ color: "gray" }} />{" "}
+                            Hold
+                          </Select.Option>
+                          <Select.Option value="Completed">
+                            <CheckCircleOutlined style={{ color: "green" }} />{" "}
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col> */}
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Assigned by
+                          </span>
+                        }
+                        name="assigned"
+                        rules={[
+                          {
+                            required: true,
+                            message:
+                              "Please enter the name of the task assigner",
+                          },
+                        ]}
+                      >
+                        <Input
+                          placeholder="Enter the name of the task assigner"
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
                             <ClockCircleOutlined /> Status
                           </span>
                         }
@@ -1296,30 +1554,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                       </Form.Item>
                     </Col>
 
-                    <Col xs={24} md={12}>
-                      <Form.Item
-                        label={
-                          <span>
-                            <FormOutlined /> Assigned by
-                          </span>
-                        }
-                        name="assigned"
-                        rules={[
-                          {
-                            required: true,
-                            message:
-                              "Please enter the name of the task assigner",
-                          },
-                        ]}
-                      >
-                        <Input
-                          placeholder="Enter the name of the task assigner"
-                          size="large"
-                        />
-                      </Form.Item>
-                    </Col>
-
-                    <Col xs={24} md={12}>
+                    {/* <Col xs={24} md={12}>
                       <Form.Item
                         label={
                           <span>
@@ -1340,7 +1575,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                           size="large"
                         />
                       </Form.Item>
-                    </Col>
+                    </Col> */}
 
                     <Col xs={24} className="text-center mt-3">
                       <Button
@@ -1351,7 +1586,19 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                         style={{ fontSize: "16px", height: "auto" }}
                         size="large"
                       >
-                        {loading ? "Submitting..." : "Submit Task Report"}
+                        {loading ? "Submitting..." : "Submit Task"}
+                      </Button>
+                      <Button
+                        color="danger"
+                        variant="solid"
+                        className=" px-5 py-2 ms-2"
+                        size="large"
+                        onClick={() => {
+                          form.resetFields();
+                          message.success("Form data cleared successfully");
+                        }}
+                      >
+                        Clear
                       </Button>
                     </Col>
                   </Row>
@@ -1505,7 +1752,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                   // dataSource={filteredData}
                   dataSource={sortedData}
                   columns={columns}
-                  rowKey={(record) => record.key}
+                  rowKey="key"
                   pagination={{
                     pageSize: 10,
                     showTotal: (total, range) =>
@@ -1518,6 +1765,426 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                   className="mt-2"
                 />
               </Card>
+            </Col>
+            <Col xs={24}>
+              <Modal
+                title="Edit Task Data"
+                className="fw-bold"
+                open={isModalVisible}
+                onCancel={() => setIsModalVisible(false)}
+                footer={null}
+                width={1200}
+              >
+                <Form
+                  layout="vertical"
+                  form={editForm}
+                  onFinish={(values) => handleUpdate(values, user)}
+                >
+                  <Form.Item name="rowIndex" hidden>
+                    <Input />
+                  </Form.Item>
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <TeamOutlined /> Client Name
+                          </span>
+                        }
+                        name="clientName"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter client name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter client name" size="large" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Work Type
+                          </span>
+                        }
+                        name="workType"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select your work type",
+                          },
+                        ]}
+                      >
+                        <Select
+                          placeholder="Select work type"
+                          onChange={handleWorkTypeChange}
+                          size="large"
+                        >
+                          <Select.Option value="Social Media">
+                            Social Media
+                          </Select.Option>
+                          <Select.Option value="Other">Other</Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+
+                    {workType === "Social Media" ? (
+                      <>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <FormOutlined /> Social Media Type
+                              </span>
+                            }
+                            name="socialMediaType"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select social media type",
+                              },
+                            ]}
+                          >
+                            <Select
+                              placeholder="Select social media type"
+                              size="large"
+                            >
+                              <Select.Option value="Facebook">
+                                <FacebookOutlined /> Facebook
+                              </Select.Option>
+                              <Select.Option value="Instagram">
+                                <InstagramOutlined /> Instagram
+                              </Select.Option>
+                              <Select.Option value="LinkedIn">
+                                <LinkedinOutlined /> LinkedIn
+                              </Select.Option>
+                              <Select.Option value="X">
+                                <XOutlined /> X
+                              </Select.Option>
+                              <Select.Option value="YouTube">
+                                <YoutubeOutlined /> YouTube
+                              </Select.Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <LinkOutlined /> Link
+                              </span>
+                            }
+                            name="link"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter the link",
+                              },
+                            ]}
+                          >
+                            <TextArea
+                              placeholder="Enter the link"
+                              onChange={handleLinkChange}
+                              rows={1}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> Date & Time
+                              </span>
+                            }
+                            name="dateTime"
+                          >
+                            <DatePicker
+                              showTime
+                              value={linkDateTime ? dayjs(linkDateTime) : null}
+                              disabled
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </>
+                    ) : (
+                      <>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> Start Date & Time
+                              </span>
+                            }
+                            name="startDateTime"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select start date & time",
+                              },
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              value={startDateTime}
+                              onChange={(value) => setStartDateTime(value)}
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> End Date & Time
+                              </span>
+                            }
+                            name="endDateTime"
+                            dependencies={["startDateTime"]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select end date & time",
+                              },
+                              ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                  if (
+                                    !value ||
+                                    value.isAfter(
+                                      getFieldValue("startDateTime")
+                                    )
+                                  ) {
+                                    return Promise.resolve();
+                                  }
+                                  return Promise.reject(
+                                    new Error(
+                                      "End date & time must be after start date & time"
+                                    )
+                                  );
+                                },
+                              }),
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              value={endDateTime}
+                              onChange={(value) => setEndDateTime(value)}
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </>
+                    )}
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <InfoCircleOutlined /> Details
+                          </span>
+                        }
+                        name="details"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter the details",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the task details"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                        rules={[
+                          {
+                            required: false,
+                            message: "Please enter the Notes/Remarks",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the notes/remarks"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    {/* <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select status of work",
+                          },
+                        ]}
+                      >
+                        <Select placeholder="Select status" size="large">
+                          <Select.Option value="Not Started">
+                            <ClockCircleOutlined style={{ color: "red" }} /> Not
+                            Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            <ClockCircleOutlined style={{ color: "blue" }} />{" "}
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            <InfoCircleOutlined style={{ color: "purple" }} />{" "}
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">
+                            <ClockCircleOutlined style={{ color: "orange" }} />{" "}
+                            Pending
+                          </Select.Option>
+                          <Select.Option value="Hold">
+                            <ClockCircleOutlined style={{ color: "gray" }} />{" "}
+                            Hold
+                          </Select.Option>
+                          <Select.Option value="Completed">
+                            <CheckCircleOutlined style={{ color: "green" }} />{" "}
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col> */}
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Assigned by
+                          </span>
+                        }
+                        name="assigned"
+                        rules={[
+                          {
+                            required: true,
+                            message:
+                              "Please enter the name of the task assigner",
+                          },
+                        ]}
+                      >
+                        <Input
+                          placeholder="Enter the name of the task assigner"
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    {/* <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                        rules={[
+                          {
+                            required: false,
+                            message: "Please enter the Notes/Remarks",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the notes/remarks"
+                          rows={2}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col> */}
+                      <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select status of work",
+                          },
+                        ]}
+                      >
+                        <Select placeholder="Select status" size="large">
+                          <Select.Option value="Not Started">
+                            <ClockCircleOutlined style={{ color: "red" }} /> Not
+                            Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            <ClockCircleOutlined style={{ color: "blue" }} />{" "}
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            <InfoCircleOutlined style={{ color: "purple" }} />{" "}
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">
+                            <ClockCircleOutlined style={{ color: "orange" }} />{" "}
+                            Pending
+                          </Select.Option>
+                          <Select.Option value="Hold">
+                            <ClockCircleOutlined style={{ color: "gray" }} />{" "}
+                            Hold
+                          </Select.Option>
+                          <Select.Option value="Completed">
+                            <CheckCircleOutlined style={{ color: "green" }} />{" "}
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} className="text-center">
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={isUpdateLoading}
+                        className="gradient-btn px-5 py-2"
+                        size="large"
+                      >
+                        {isUpdateLoading ? "Updating..." : "Update Task"}
+                      </Button>
+                      <Button
+                        color="danger"
+                        variant="solid"
+                        size="large"
+                        onClick={() => setIsModalVisible(false)}
+                        className="ms-2 px-5 py-2"
+                      >
+                        Cancel
+                      </Button>
+                    </Col>
+                  </Row>
+                </Form>
+              </Modal>
             </Col>
           </Row>
         </Content>
