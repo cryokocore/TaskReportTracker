@@ -27,6 +27,16 @@ import utc from "dayjs/plugin/utc";
 import * as XLSX from "xlsx-js-style";
 import { saveAs } from "file-saver";
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
+} from "recharts";
+import {
   UserOutlined,
   LogoutOutlined,
   ReloadOutlined,
@@ -48,6 +58,7 @@ import {
   PauseCircleOutlined,
   DownloadOutlined,
   EditOutlined,
+  BarChartOutlined, TableOutlined
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -100,6 +111,8 @@ const OtherUser = ({ username, setUser, user }) => {
   const [formatData, setFormatData] = useState([]);
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
   const [updateButton, setUpdateButton] = useState(false);
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [showChart, setShowChart] = useState(true);
 
   const onFormChange = (changedValues, allValues) => {
     setEditingRecord((prev) => ({
@@ -169,7 +182,7 @@ const OtherUser = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
 
       const text = await response.text();
@@ -183,8 +196,22 @@ const OtherUser = ({ username, setUser, user }) => {
           return;
         }
 
-        setTableData(result);
-        // console.log("Result", result);
+        // setTableData(result);
+        // setTableData(Array.isArray(result.tasks) ? result.tasks : []);
+        
+        if (Array.isArray(result.tasks) && result.tasks.length > 0) {
+          setTableData(result.tasks);
+          if (isManualRefresh.current) {
+            message.success("Table data updated successfully.");
+            isManualRefresh.current = false;
+          }
+        } else {
+          message.warning("No tasks found.");
+          setTableData([]);
+        }
+        
+
+        console.log("Result", result);
 
         // setTableData(result);
         if (isManualRefresh.current) {
@@ -205,6 +232,7 @@ const OtherUser = ({ username, setUser, user }) => {
   useEffect(() => {
     fetchData();
   }, []);
+
   useEffect(() => {}, [user]);
 
   const handleManualRefresh = () => {
@@ -258,7 +286,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -320,7 +348,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -345,43 +373,76 @@ const OtherUser = ({ username, setUser, user }) => {
     }
   };
 
-  const formattedData = tableData.map((item, index) => {
-    const cleanedItem = Object.keys(item).reduce((acc, key) => {
-      acc[key.trim()] = item[key]; // Trim column names to match correctly
-      return acc;
-    }, {});
+  // const formattedData = tableData.map((item, index) => {
+  //   const cleanedItem = Object.keys(item).reduce((acc, key) => {
+  //     acc[key.trim()] = item[key]; // Trim column names to match correctly
+  //     return acc;
+  //   }, {});
 
-    return {
-      key: index,
-      rowIndex: item.rowIndex,
-      clientName: cleanedItem["Client/Task Name"]?.trim(),
-      startDateTime: cleanedItem["Start Date & Time"]
-        ? dayjs(cleanedItem["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-        : "-",
-      endDateTime: cleanedItem["End Date & Time"] // 🛠 FIX: Trimmed key name
-        ? dayjs(cleanedItem["End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-        : "-",
-      duration:
-        cleanedItem["Duration"] &&
-        cleanedItem["Duration"] !== "1899-12-29T18:38:53.000Z"
-          ? cleanedItem["Duration"]
+  //   return {
+  //     key: index,
+  //     rowIndex: item.rowIndex,
+  //     clientName: cleanedItem["Client/Task Name"]?.trim(),
+  //     startDateTime: cleanedItem["Start Date & Time"]
+  //       ? dayjs(cleanedItem["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
+  //       : "-",
+  //     endDateTime: cleanedItem["End Date & Time"] // 🛠 FIX: Trimmed key name
+  //       ? dayjs(cleanedItem["End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
+  //       : "-",
+  //     duration:
+  //       cleanedItem["Duration"] &&
+  //       cleanedItem["Duration"] !== "1899-12-29T18:38:53.000Z"
+  //         ? cleanedItem["Duration"]
+  //         : "-",
+  //     details: cleanedItem["Details"]?.trim() || "-",
+  //     link: cleanedItem["Link"] || "N/A",
+
+  //     totalCount: cleanedItem["Total Count"] || "-",
+  //     status: cleanedItem["Status"],
+  //     assigned: cleanedItem["Assigned By"],
+  //     notes: cleanedItem["Notes/Remarks"] || "-",
+  //   };
+  // });
+
+  
+  const formattedData = Array.isArray(tableData)
+  ? tableData.map((item, index) => {
+      const cleanedItem = Object.keys(item).reduce((acc, key) => {
+        acc[key.trim()] = item[key];
+        return acc;
+      }, {});
+
+      return {
+        key: index,
+        rowIndex: item.rowIndex,
+        clientName: cleanedItem["Client/Task Name"]?.trim(),
+        startDateTime: cleanedItem["Start Date & Time"]
+          ? dayjs(cleanedItem["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
           : "-",
-      details: cleanedItem["Details"]?.trim() || "-",
-      link: cleanedItem["Link"] || "N/A",
-
-      totalCount: cleanedItem["Total Count"] || "-",
-      status: cleanedItem["Status"],
-      assigned: cleanedItem["Assigned By"],
-      notes: cleanedItem["Notes/Remarks"] || "-",
-    };
-  });
+        endDateTime: cleanedItem["End Date & Time"]
+          ? dayjs(cleanedItem["End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
+          : "-",
+        duration:
+          cleanedItem["Duration"] &&
+          cleanedItem["Duration"] !== "1899-12-29T18:38:53.000Z"
+            ? cleanedItem["Duration"]
+            : "-",
+        details: cleanedItem["Details"]?.trim() || "-",
+        link: cleanedItem["Link"] || "N/A",
+        totalCount: cleanedItem["Total Count"] || "-",
+        status: cleanedItem["Status"],
+        assigned: cleanedItem["Assigned By"],
+        notes: cleanedItem["Notes/Remarks"] || "-",
+      };
+    })
+  : [];
 
   const statusMapping = {
     total: null,
     completed: "Completed",
     pending: "Pending",
     notStarted: "Not Started",
-    workinprogress: "Work In Progress",
+    workinprogress: "Work in Progress",
     underReview: "Under Review",
     hold: "Hold",
   };
@@ -441,7 +502,66 @@ const OtherUser = ({ username, setUser, user }) => {
       ...item,
       displayIndex: idx,
     }));
-  // console.log("Sorted Data", sortedData);
+
+    const groupedByDate = {};
+
+    sortedData.forEach((item) => {
+      const start = item.startDateTime && item.startDateTime !== "-"
+        ? dayjs(item.startDateTime)
+        : null;
+      const end = item.endDateTime && item.endDateTime !== "-"
+        ? dayjs(item.endDateTime)
+        : start; // fallback to start if end is missing
+    
+      if (!start || !end) return;
+    
+      const status = item.status;
+    
+      for (let date = start.clone(); date.isSameOrBefore(end, "day"); date = date.add(1, "day")) {
+        const dateStr = date.format("YYYY-MM-DD");
+    
+        if (!groupedByDate[dateStr]) {
+          groupedByDate[dateStr] = {
+            date: dateStr,
+            Completed: 0,
+            Pending: 0,
+            "Not Started": 0,
+            "Work in Progress": 0,
+            "Under Review": 0,
+            Hold: 0,
+          };
+        }
+    
+        if (groupedByDate[dateStr][status] !== undefined) {
+          groupedByDate[dateStr][status]++;
+        }
+      }
+    });
+    
+
+  const dateWiseChartData = Object.values(groupedByDate).sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const filteredChartData =
+    Array.isArray(dateRange) && dateRange[0] && dateRange[1]
+      ? dateWiseChartData.filter((item) => {
+          const date = dayjs(item.endDateTime || item.date); // fallback if needed
+          return (
+            date.isSameOrAfter(dateRange[0], "day") &&
+            date.isSameOrBefore(dateRange[1], "day")
+          );
+        })
+      : dateWiseChartData;
+  const hasChartData = filteredChartData.some(
+    (item) =>
+      item.Completed > 0 ||
+      item.Pending > 0 ||
+      item["Not Started"] > 0 ||
+      item["Work in Progress"] > 0 ||
+      item["Under Review"] > 0 ||
+      item.Hold > 0
+  );
 
   const handleExport = () => {
     const exportData = filteredData.map(({ key, ...rest }) => {
@@ -521,7 +641,11 @@ const OtherUser = ({ username, setUser, user }) => {
     worksheet["!cols"] = maxWidths.map((w) => ({ wch: w + 5 })); // +5 for padding
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `${employeeId}-${username}`);
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      `${employeeId}-${username}`
+    );
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -813,35 +937,33 @@ const OtherUser = ({ username, setUser, user }) => {
       right: -10px;
       background: white;
       color: red;
-      padding: 10px;
+      padding: 5px;
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       margin-top: 5px;
       margin-left: 100px !important;
       z-index: 100;
-       display: flex;
-        flex-direction: column;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-size:16px;
       border: 2px solid #f7f5f5;
-               width: 200px;
-      height: auto
-    }
+      width: 200px;
+      height: auto;
+      }
     
       .logout-action {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  color: red;
-  cursor: pointer;
-  padding: 4px 8px;
-    border: 2px solid red;
-
-  border-radius: 4px;
-  transition: background 0.2s ease, color 0.2s ease;
-}
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        color: red;
+        cursor: pointer;
+        padding: 4px 8px;
+        border: 2px solid red;
+        border-radius: 4px;
+        transition: background 0.2s ease, color 0.2s ease;
+        }
 
 .logout-action:hover {
   background-color: red;
@@ -993,7 +1115,6 @@ const OtherUser = ({ username, setUser, user }) => {
                     style={{
                       fontWeight: "500",
                       marginBottom: "3px",
-                      fontSize: "18px",
                       color: "black",
                     }}
                     className="text-center"
@@ -1002,24 +1123,26 @@ const OtherUser = ({ username, setUser, user }) => {
                       <UserOutlined
                         className="gradient-background text-white "
                         style={{
-                          border: "2px solid white",
-                          padding: "10px",
+                          border: "1px solid white",
                           borderRadius: "40px",
-                          padding: "10px",
+                          padding: "9px",
+                          fontSize: "20px",
                         }}
                       />
                     </div>
 
-                    <div className="gradient-text mt-1">
+                    <div
+                      className="gradient-text mt-1"
+                      style={{ fontSize: "15px" }}
+                    >
                       Hello, <br />
                       {username}!<br />({employeeId})
                     </div>
                   </div>
                   <div
                     style={{
-                      borderBottom: "3px solid #f0f0f0",
-                      borderRadius: "50%",
-                      width: "150px",
+                      borderBottom: "2px solid #f0f0f0",
+                      width: "190px",
                     }}
                     className="mt-1"
                   ></div>
@@ -1372,7 +1495,7 @@ const OtherUser = ({ username, setUser, user }) => {
                   <div className="d-flex align-items-center justify-content-center flex-wrap gap-3">
                     {/* Icon and Title */}
                     <div className="d-flex align-items-center">
-                      <CalendarOutlined
+                      <TableOutlined
                         style={{ fontSize: "24px", marginRight: "10px" }}
                       />
                       <span className="gradient-text">
@@ -1435,6 +1558,104 @@ const OtherUser = ({ username, setUser, user }) => {
                   loading={refreshing}
                   className="mt-2"
                 />
+              </Card>
+            </Col>
+
+            <Col xs={24}>
+              <Card
+                title={
+                  <div className="d-flex align-items-center justify-content-center flex-wrap ">
+                    <div className="d-flex align-items-center">
+                      <BarChartOutlined
+                        style={{ fontSize: "24px", marginRight: "10px" }}
+                      />
+                      <span className="gradient-text">
+                        {employeeId} - {username}'s Task Status Chart
+                      </span>
+                    </div>
+
+               
+                    <div className="flex-grow-1 d-flex justify-content-center">
+                      <>
+                        <DatePicker.RangePicker
+                          format="YYYY-MM-DD"
+                          onChange={(dates) => setDateRange(dates)}
+                          allowClear
+                          className="me-lg-5"
+                        />
+                      </>
+                    </div>
+
+                    <Button
+                      type="primary"
+                      className="gradient-btn d-flex align-items-center"
+                      onClick={() => setShowChart(!showChart)}
+                    >
+                      {showChart ? "Hide Chart" : "View Chart"}
+                    </Button>
+                  </div>
+                }
+                bordered={false}
+                style={{
+                  width: "100%",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
+              >
+                <Space
+                  style={{
+                    marginBottom: 16,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                  }}
+                ></Space>
+
+                {showChart && hasChartData && (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart
+                      data={
+                        Array.isArray(filteredChartData)
+                          ? filteredChartData
+                          : []
+                      }
+                      margin={{ top: 20, right: 30, left: 10, bottom: 40 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis allowDecimals={false} />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Bar dataKey="Completed" stackId="a" fill="#33c755" />
+                      <Bar dataKey="Pending" stackId="a" fill="#f7971e" />
+                      <Bar dataKey="Not Started" stackId="a" fill="#e15260" />
+                      <Bar
+                        dataKey="Work in Progress"
+                        stackId="a"
+                        fill="#007bff"
+                      />
+                      <Bar dataKey="Under Review" stackId="a" fill="#8e44ad" />
+                      <Bar dataKey="Hold" stackId="a" fill="#6c757d" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+
+                {showChart && !hasChartData && (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      marginTop: "2rem",
+                      color: "#888",
+                    }}
+                    className="mb-1"
+                  >
+                    No data available
+                  </div>
+                )}
               </Card>
             </Col>
 

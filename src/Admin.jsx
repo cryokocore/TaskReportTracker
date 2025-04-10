@@ -44,7 +44,8 @@ import {
   IdcardOutlined,
   DownloadOutlined,
   PlusOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  TableOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "./App.css";
@@ -73,6 +74,8 @@ const Admin = ({ username, setUser, user }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [employeeData, setEmployeeData] = useState([]);
+  const [employeeAllData, setEmployeeAllData] = useState([]);
+
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(null);
@@ -85,6 +88,7 @@ const Admin = ({ username, setUser, user }) => {
   const [editForm] = Form.useForm();
   const [otherEditForm] = Form.useForm();
   const [loadingEmployeeData, setLoadingEmployeeData] = useState(false);
+  const [loadingEmployeeAllData, setLoadingEmployeeAllData] = useState(false);
   const [employeeList, setEmployeeList] = useState([]);
   const [tableKey, setTableKey] = useState(0);
   const [showAssignForm, setShowAssignForm] = useState(false);
@@ -112,12 +116,17 @@ const Admin = ({ username, setUser, user }) => {
     fetchEmployeeIds();
   }, []);
 
+  useEffect(() => {
+    fetchEmployeeAllData();
+  }, []);
+
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycby57xKiIAkoOO0isCesdc9j6xnjDnaAz7mP894xp90uq_kbkPubvDqfIzRdG__aYtD6sA/exec"
+        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?mode=dropdown"
       );
       const data = await response.json();
+      console.log("fetchEmployeeIds:", data)
 
       if (data.success) {
         setEmployeeList(data.data);
@@ -128,26 +137,27 @@ const Admin = ({ username, setUser, user }) => {
 
   const fetchEmployeeData = async (employeeId) => {
     setRefreshing(true);
+    console.log(employeeId)
 
     try {
       setLoadingEmployeeData(true);
-      setSelectedEmployee(employeeId); // Update selected employee
+      setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec?employeeId=${employeeId}`
+        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
-      // console.log(data);
-      // ✅ Ensure employeeData is always an array
-      if (Array.isArray(data)) {
-        setEmployeeData(data);
+      console.log("fetchEmployeeData:", data);
+      console.log("Employee Id", employeeId);
+      if (Array.isArray(data.tasks)) {
+        setEmployeeData(data.tasks);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
-          isManualRefresh.current = false; // Reset after showing message
+          isManualRefresh.current = false;
         }
       } else if (data.success === false) {
-        setEmployeeData([]); // Clear data if empty
+        setEmployeeData([]);
       } else {
-        setEmployeeData([]); // Fallback if unexpected response
+        setEmployeeData([]);
       }
     } catch (error) {
     } finally {
@@ -155,6 +165,50 @@ const Admin = ({ username, setUser, user }) => {
       setLoadingEmployeeData(false);
     }
   };
+
+  const fetchEmployeeAllData = async () => {
+    setRefreshing(true);
+
+    try {
+      setLoadingEmployeeAllData(true);
+      // setSelectedEmployee(employeeId);
+      const response = await fetch(
+        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?mode=allTasks`
+      );
+      const data = await response.json();
+      console.log("fetchEmployeeAllData:", data);
+      if (Array.isArray(data)) {
+        setEmployeeAllData(data);
+        if (isManualRefresh.current) {
+          message.success("Table data updated successfully.");
+          isManualRefresh.current = false;
+        }
+      } else if (data.success === false) {
+        setEmployeeAllData([]);
+      } else {
+        setEmployeeAllData([]);
+      }
+    } catch (error) {
+    } finally {
+      setRefreshing(false);
+      setLoadingEmployeeAllData(false);
+    }
+  };
+  const getInitials = (name) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
+
+  const calculateCompletedPercentage = (tasks = []) => {
+    const completed = tasks.filter((t) => t.Status === "Completed").length;
+    const total = tasks.length;
+    const percentage = total ? Math.round((completed / total) * 100) : 0;
+    return { completed, total, percentage };
+  };
+
   const handleLogout = () => {
     setUser(null);
     message.info(`See you soon ${username}. Take care!`);
@@ -462,32 +516,32 @@ const Admin = ({ username, setUser, user }) => {
           width: 250,
           render: (text) => <Tooltip title={text}>{text}</Tooltip>,
         },
-      //   {
-      //     title: "Actions",
-      //     key: "action",
-      //     width: 120,
-      //     fixed: "right",
-      //     render: (_, record) => (
-      //       <>
-      //       <Button
-      //         color="primary"
-      //         variant="filled"
-      //         onClick={() => handleEdit(record, record.rowIndex)}
-      //       >
-      //         <EditOutlined />
-              
-      //       </Button>
-      //       <Button  color="danger"
-      //         variant="filled"
-      //         className="ms-1"
-      //   danger
-      //   onClick={() => handleDelete(record.rowIndex)}
-      // >
-      //  <DeleteOutlined />
-      // </Button>
-      //       </> 
-      //     ),
-      //   },
+        //   {
+        //     title: "Actions",
+        //     key: "action",
+        //     width: 120,
+        //     fixed: "right",
+        //     render: (_, record) => (
+        //       <>
+        //       <Button
+        //         color="primary"
+        //         variant="filled"
+        //         onClick={() => handleEdit(record, record.rowIndex)}
+        //       >
+        //         <EditOutlined />
+
+        //       </Button>
+        //       <Button  color="danger"
+        //         variant="filled"
+        //         className="ms-1"
+        //   danger
+        //   onClick={() => handleDelete(record.rowIndex)}
+        // >
+        //  <DeleteOutlined />
+        // </Button>
+        //       </>
+        //     ),
+        //   },
       ];
     } else {
       return [
@@ -649,7 +703,7 @@ const Admin = ({ username, setUser, user }) => {
   //   const formData = new URLSearchParams();
   //   formData.append("action", "st006UpdateTask");
 
-  //   formData.append("rowIndex", rowIndex); 
+  //   formData.append("rowIndex", rowIndex);
   //   formData.append("workType", workType);
   //   formData.append("clientName", clientName);
   //   formData.append("link", workType === "Social Media" ? link : "");
@@ -677,7 +731,7 @@ const Admin = ({ username, setUser, user }) => {
 
   //   try {
   //     const response = await fetch(
-  //       "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+  //       "https://script.google.com/macros/s/AKfycbxe37f6n4P_tV5Bot3v4y18w9WYjMbsB7-OpmA436gErCxxUVLSF5XBf-wmzK5EGkSchA/exec",
   //       {
   //         method: "POST",
   //         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -702,71 +756,71 @@ const Admin = ({ username, setUser, user }) => {
   //   }
   // };
 
-//  const handleOtherUpdate = async (values) => {
-//     setIsOtherUpdateLoading(true);
+  //  const handleOtherUpdate = async (values) => {
+  //     setIsOtherUpdateLoading(true);
 
-//     const rowIndex = otherEditingTask?.rowIndex;
-//     console.log(rowIndex);
-//     if (!rowIndex) {
-//       message.error("Missing row index for update.");
-//       setIsOtherUpdateLoading(false);
-//       return;
-//     }
+  //     const rowIndex = otherEditingTask?.rowIndex;
+  //     console.log(rowIndex);
+  //     if (!rowIndex) {
+  //       message.error("Missing row index for update.");
+  //       setIsOtherUpdateLoading(false);
+  //       return;
+  //     }
 
-//     const {
-//       clientName,
-//       link,
-//       details,
-//       startDateTime,
-//       endDateTime,
-//       status,
-//       assigned,
-//       notes,
-//     } = values;
-//     console.log("Values:", values);
-//     const formData = new URLSearchParams();
-//     formData.append("action", "updateTask");
-//     formData.append("employeeId", selectedEmployeeId);
-//     formData.append("rowIndex", rowIndex); // 🔑 critical value
-//     formData.append("clientName", clientName);
-//     formData.append("link", link || "");
-//     formData.append("details", details || "");
-//     formData.append("startDateTime", startDateTime.toISOString());
-//     formData.append("endDateTime", endDateTime.toISOString());
-//     formData.append("status", status);
-//     formData.append("assigned", assigned);
-//     formData.append("notes", notes || "");
+  //     const {
+  //       clientName,
+  //       link,
+  //       details,
+  //       startDateTime,
+  //       endDateTime,
+  //       status,
+  //       assigned,
+  //       notes,
+  //     } = values;
+  //     console.log("Values:", values);
+  //     const formData = new URLSearchParams();
+  //     formData.append("action", "updateTask");
+  //     formData.append("employeeId", selectedEmployeeId);
+  //     formData.append("rowIndex", rowIndex); // 🔑 critical value
+  //     formData.append("clientName", clientName);
+  //     formData.append("link", link || "");
+  //     formData.append("details", details || "");
+  //     formData.append("startDateTime", startDateTime.toISOString());
+  //     formData.append("endDateTime", endDateTime.toISOString());
+  //     formData.append("status", status);
+  //     formData.append("assigned", assigned);
+  //     formData.append("notes", notes || "");
 
-//     try {
-//       const response = await fetch(
-//         "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
-//         {
-//           method: "POST",
-//           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//           body: formData.toString(),
-//         }
-//       );
+  //     try {
+  //       const response = await fetch(
+  //         "https://script.google.com/macros/s/AKfycbxe37f6n4P_tV5Bot3v4y18w9WYjMbsB7-OpmA436gErCxxUVLSF5XBf-wmzK5EGkSchA/exec",
+  //         {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  //           body: formData.toString(),
+  //         }
+  //       );
 
-//       const result = await response.json();
-//       if (result.success) {
-//         message.success("Task Updated Successfully!");
-//         setIsOtherModalVisible(false);
-//         otherEditForm.resetFields();
-//         setOtherEditingTask(null);
-//         fetchEmployeeData(selectedEmployee); 
-//       } else {
-//         message.error(`Update failed: ${result.error || "Unknown error"}`);
-//       }
-//     } catch (error) {
-//       message.error("An error occurred during update.");
-//     } finally {
-//       setIsOtherUpdateLoading(false);
-//     }
-//   };
+  //       const result = await response.json();
+  //       if (result.success) {
+  //         message.success("Task Updated Successfully!");
+  //         setIsOtherModalVisible(false);
+  //         otherEditForm.resetFields();
+  //         setOtherEditingTask(null);
+  //         fetchEmployeeData(selectedEmployee);
+  //       } else {
+  //         message.error(`Update failed: ${result.error || "Unknown error"}`);
+  //       }
+  //     } catch (error) {
+  //       message.error("An error occurred during update.");
+  //     } finally {
+  //       setIsOtherUpdateLoading(false);
+  //     }
+  //   };
 
   useEffect(() => {
-  fetchEmployeeData()    
-}, []);
+    fetchEmployeeData();
+  }, []);
 
   // Usage example
   const columns = getColumns(selectedEmployee);
@@ -973,23 +1027,21 @@ const Admin = ({ username, setUser, user }) => {
       right: -10px;
       background: white;
       color: red;
-      padding: 15px;
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        background: rgba(255, 255, 255); /* transparent white */
-
+      background: rgba(255, 255, 255); /* transparent white */
+      padding: 5px;
       margin-top: 10px;
       margin-left: 100px !important;
       z-index: 100;
       display: flex;
-        flex-direction: column;
+      flex-direction: column;
       align-items: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-size:16px;
-       border: 2px solid #f7f5f5;
-                     width: 200px;
-       height: auto;
+      border: 2px solid #f7f5f5;
+      width: 200px;
+      height: auto;
     }
     
   .logout-action {
@@ -1275,7 +1327,7 @@ const Admin = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1290,7 +1342,7 @@ const Admin = ({ username, setUser, user }) => {
         Defaultform.resetFields();
         setStartDateTime(null);
         setEndDateTime(null);
-        fetchEmployeeData(selectedEmployee); 
+        fetchEmployeeData(selectedEmployee);
       } else {
         message.error(`Error: ${result.error || "Unknown error"}`);
       }
@@ -1350,7 +1402,7 @@ const Admin = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1365,8 +1417,7 @@ const Admin = ({ username, setUser, user }) => {
         Defaultform.resetFields();
         setStartDateTime(null);
         setEndDateTime(null);
-        fetchEmployeeData(selectedEmployee); 
-
+        fetchEmployeeData(selectedEmployee);
       } else {
         message.error(`Error: ${result.error || "Unknown error"}`);
       }
@@ -1439,7 +1490,7 @@ const Admin = ({ username, setUser, user }) => {
   //   setLinkDateTime(record.dateTime || null); // if you're using it
   //   setStartDateTime(record.startDateTime || null);
   //   setEndDateTime(record.endDateTime || null);
-  
+
   //   setIsModalVisible(true);
   // };
 
@@ -1460,9 +1511,9 @@ const Admin = ({ username, setUser, user }) => {
   // const handleDelete = async (rowIndex) => {
   //   const confirmed = window.confirm("Are you sure you want to delete this task?");
   //   if (!confirmed) return;
-  
+
   //   try {
-  //     const response = await fetch("https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec", {
+  //     const response = await fetch("https://script.google.com/macros/s/AKfycbxe37f6n4P_tV5Bot3v4y18w9WYjMbsB7-OpmA436gErCxxUVLSF5XBf-wmzK5EGkSchA/exec", {
   //       method: "POST",
   //       headers: {
   //         "Content-Type": "application/x-www-form-urlencoded",
@@ -1472,12 +1523,12 @@ const Admin = ({ username, setUser, user }) => {
   //         rowIndex: rowIndex.toString(),
   //       }),
   //     });
-  
+
   //     const result = await response.json();
-  
+
   //     if (result.success) {
   //       message.success("Task deleted successfully");
-  //       fetchEmployeeData(selectedEmployee); 
+  //       fetchEmployeeData(selectedEmployee);
   //     } else {
   //       message.error(result.error || "Failed to delete task");
   //     }
@@ -1496,7 +1547,7 @@ const Admin = ({ username, setUser, user }) => {
   //     cancelText: "Cancel",
   //     onOk: async () => {
   //       try {
-  //         const response = await fetch("https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec", {
+  //         const response = await fetch("https://script.google.com/macros/s/AKfycbxe37f6n4P_tV5Bot3v4y18w9WYjMbsB7-OpmA436gErCxxUVLSF5XBf-wmzK5EGkSchA/exec", {
   //           method: "POST",
   //           headers: {
   //             "Content-Type": "application/x-www-form-urlencoded",
@@ -1506,12 +1557,12 @@ const Admin = ({ username, setUser, user }) => {
   //             rowIndex: rowIndex.toString(),
   //           }),
   //         });
-  
+
   //         const result = await response.json();
-  
+
   //         if (result.success) {
   //           message.success("Task deleted successfully");
-  //           fetchEmployeeData(selectedEmployee); 
+  //           fetchEmployeeData(selectedEmployee);
   //         } else {
   //           message.error(result.error || "Failed to delete task");
   //         }
@@ -1522,7 +1573,6 @@ const Admin = ({ username, setUser, user }) => {
   //     },
   //   });
   // };
-  
 
   return (
     <div className="container-fluid p-0">
@@ -1561,12 +1611,12 @@ const Admin = ({ username, setUser, user }) => {
                 <div
                   className="logout-popup"
                   onMouseLeave={() => setShowLogout(false)}
+                  style={{ border: "1px solid lightblue" }}
                 >
                   <div
                     style={{
                       fontWeight: "500",
                       marginBottom: "3px",
-                      fontSize: "18px",
                       color: "black",
                     }}
                     className="text-center"
@@ -1575,24 +1625,26 @@ const Admin = ({ username, setUser, user }) => {
                       <UserOutlined
                         className="gradient-background text-white "
                         style={{
-                          border: "2px solid white",
-                          padding: "10px",
+                          border: "1px solid white",
                           borderRadius: "40px",
-                          padding: "10px",
+                          padding: "9px",
+                          fontSize: "20px",
                         }}
                       />
                     </div>
 
-                    <div className="gradient-text mt-1">
+                    <div
+                      className="gradient-text mt-1"
+                      style={{ fontSize: "15px" }}
+                    >
                       Hello, <br />
                       {username}!<br />({employeeId})
                     </div>
                   </div>
                   <div
                     style={{
-                      borderBottom: "3px solid #f0f0f0",
-                      borderRadius: "50%",
-                      width: "150px",
+                      borderBottom: "2px solid #f0f0f0",
+                      width: "190px",
                     }}
                     className="mt-1"
                   ></div>
@@ -1685,7 +1737,7 @@ const Admin = ({ username, setUser, user }) => {
                   label: "Assign Task",
                   key: "assignTask",
                   gradient:
-                    "linear-gradient(to right, rgb(23 234 140), rgb(96, 120, 234))",
+                    "linear-gradient(to right, rgb(234 23 103), rgb(96, 120, 234))",
                 },
               ].map(({ label, key, gradient }) => (
                 <Col xs={24} sm={12} md={8} lg={5} key={key}>
@@ -2346,7 +2398,7 @@ const Admin = ({ username, setUser, user }) => {
                 <div className="d-flex align-items-center justify-content-center flex-wrap gap-3 ">
                   {/* Icon and Title */}
                   <div className="d-flex align-items-center ">
-                    <CalendarOutlined
+                    <TableOutlined
                       style={{ fontSize: "24px", marginRight: "10px" }}
                     />
                     {/* <span className="gradient-text">Task Reports</span> */}
@@ -2416,7 +2468,7 @@ const Admin = ({ username, setUser, user }) => {
             </Card>
           </Col>
           <Col xs={24}>
-          {/* <Modal
+            {/* <Modal
                 title="Edit Task Data"
                 className="fw-bold"
                 open={isModalVisible}
@@ -2769,9 +2821,9 @@ const Admin = ({ username, setUser, user }) => {
                 </Form>
               </Modal> */}
           </Col>
-          
+
           <Col xs={24}>
-              {/* <Modal
+            {/* <Modal
                 title="Edit Task Data"
                 className="fw-bold"
                 open={isOtherModalVisible}
@@ -3004,7 +3056,35 @@ const Admin = ({ username, setUser, user }) => {
                   </Row>
                 </Form>
               </Modal> */}
-            </Col>
+          </Col>
+          <div className="employee-performance-card">
+            <h2>Employee Performance</h2>
+            {employeeAllData.map((emp) => {
+              const { completed, total, percentage } =
+                calculateCompletedPercentage(emp.tasks);
+              return (
+                <div key={emp.id} className="employee-performance-item">
+                  <Avatar style={{ backgroundColor: "#a167ff" }}>
+                    {getInitials(emp.name)}
+                  </Avatar>
+                  <div className="employee-info">
+                    <strong>{emp.name}</strong>
+                    <div
+                      className="progress-bar"
+                      percent={percentage}
+                      showInfo={false}
+                      strokeColor="#a167ff"
+                      trailColor="#d1c2f0"
+                    />
+                    <span style={{ fontSize: "12px", color: "#666" }}>
+                      {completed} of {total} tasks completed
+                    </span>
+                  </div>
+                  <div className="percentage">{percentage}%</div>
+                </div>
+              );
+            })}
+          </div>
         </Content>
       </Layout>
     </div>

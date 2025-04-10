@@ -48,6 +48,8 @@ import {
   SyncOutlined,
   PauseCircleOutlined,
   DownloadOutlined,
+  BarChartOutlined,
+  TableOutlined 
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -57,6 +59,19 @@ import {
   Container,
   Progress,
 } from "react-bootstrap";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
+} from "recharts";
+
 import logo from "./Images/stratify-logo.png";
 const XIcon = () => (
   <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor">
@@ -67,7 +82,8 @@ const XIcon = () => (
 dayjs.extend(utc);
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
-
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 message.config({
   duration: 3,
   maxCount: 3,
@@ -94,7 +110,8 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editForm] = Form.useForm();
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
-
+  const [showChart, setShowChart] = useState(true);
+  const [dateRange, setDateRange] = useState([null, null]);
   const getSocialMediaIcon = (type) => {
     switch (type) {
       case "Facebook":
@@ -164,7 +181,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
       const text = await response.text();
 
@@ -174,7 +191,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
         if (
           result.success === false ||
-          !Array.isArray(result) ||
+          !Array.isArray(result.tasks) ||
           result.length === 0
         ) {
           message.warning("No data found.");
@@ -182,7 +199,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
           return;
         }
 
-        setTableData(result);
+        setTableData(result.tasks);
         // console.log("Result:", result);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
@@ -202,6 +219,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   useEffect(() => {
     fetchData();
   }, []);
+  
   const handleManualRefresh = () => {
     isManualRefresh.current = true;
     setSelectedStatus(null); // Reset selection so all cards are visible
@@ -287,7 +305,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -371,7 +389,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbw6k5Nv3FEs0E8QmAg9VFTJQr896XFN9_hdhfxHeDCvEUSpkwuFqq6mtFU9P1czzEiEyw/exec",
+        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -429,7 +447,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     completed: "Completed",
     pending: "Pending",
     notStarted: "Not Started",
-    workinprogress: "Work In Progress",
+    workinprogress: "Work in Progress",
     underReview: "Under Review",
     hold: "Hold",
   };
@@ -701,7 +719,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setLinkDateTime(record.dateTime || null); // if you're using it
     setStartDateTime(record.startDateTime || null);
     setEndDateTime(record.endDateTime || null);
-  
+
     setIsModalVisible(true);
   };
 
@@ -766,6 +784,16 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   };
 
   const taskStats = getTaskStats();
+
+  const chartData = [
+    { name: "Completed", value: taskStats.completed },
+    { name: "Pending", value: taskStats.pending },
+    { name: "Not Started", value: taskStats.notStarted },
+    { name: "Work in Progress", value: taskStats.workinprogress },
+    { name: "Under Review", value: taskStats.underReview },
+    { name: "Hold", value: taskStats.hold },
+  ];
+
   const handleExport = () => {
     const exportData = filteredData.map(({ key, ...rest }) => {
       const newRow = {};
@@ -957,35 +985,33 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       right: -10px;
       background: white;
       color: red;
-      padding: 15px ;
+      padding: 5px;
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       margin-top: 10px;
       margin-left: 100px !important;
       z-index: 100;
       display: flex;
-              flex-direction: column;
-
+      flex-direction: column;
       align-items: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-size:16px;
-         border: 2px solid #f7f5f5;
-         width: 200px;
+      border: 2px solid #f7f5f5;
+      width: 200px;
       height: auto
     }
     
     .logout-action {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  color: red;
-  cursor: pointer;
-  padding: 4px 8px;
-     border: 2px solid red;
-  border-radius: 4px;
-  transition: background 0.2s ease, color 0.2s ease;
-}
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      color: red;
+      cursor: pointer;
+      padding: 4px 8px;
+      border: 2px solid red;
+      border-radius: 4px;
+      transition: background 0.2s ease, color 0.2s ease;
+      }
 
 .logout-action:hover {
   background-color: red;
@@ -1099,6 +1125,110 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 }
   `;
 
+  const groupedByDate = {};
+
+  // sortedData.forEach((item) => {
+  //   const dateStr =
+  //     item.status === "Completed" && item.endDateTime
+  //       ? dayjs(item.endDateTime).format("YYYY-MM-DD")
+  //       : item.linkPostedDateTime !== "-"
+  //       ? dayjs(item.linkPostedDateTime).format("YYYY-MM-DD")
+  //       : item.startDateTime !== "-"
+  //       ? dayjs(item.startDateTime).format("YYYY-MM-DD")
+  //       : null;
+
+  //   if (!dateStr) return;
+
+  //   if (!groupedByDate[dateStr]) {
+  //     groupedByDate[dateStr] = {
+  //       date: dateStr,
+  //       Completed: 0,
+  //       Pending: 0,
+  //       "Not Started": 0,
+  //       "Work in Progress": 0,
+  //       "Under Review": 0,
+  //       Hold: 0,
+  //     };
+  //   }
+
+  //   const status = item.status;
+  //   if (groupedByDate[dateStr][status] !== undefined) {
+  //     groupedByDate[dateStr][status]++;
+  //   }
+  // });
+
+  sortedData.forEach((item) => {
+    const start =
+      item.startDateTime && item.startDateTime !== "-"
+        ? dayjs(item.startDateTime)
+        : null;
+    const end =
+      item.endDateTime && item.endDateTime !== "-"
+        ? dayjs(item.endDateTime)
+        : start; 
+
+    if (!start || !end) return;
+
+    const status = item.status;
+
+    for (
+      let date = start.clone();
+      date.isSameOrBefore(end, "day");
+      date = date.add(1, "day")
+    ) {
+      const dateStr = date.format("YYYY-MM-DD");
+
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = {
+          date: dateStr,
+          Completed: 0,
+          Pending: 0,
+          "Not Started": 0,
+          "Work in Progress": 0,
+          "Under Review": 0,
+          Hold: 0,
+        };
+      }
+
+      if (groupedByDate[dateStr][status] !== undefined) {
+        groupedByDate[dateStr][status]++;
+      }
+    }
+  });
+
+  const dateWiseChartData = Object.values(groupedByDate).sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const filteredChartData =
+    Array.isArray(dateRange) && dateRange[0] && dateRange[1]
+      ? dateWiseChartData.filter((item) => {
+          const date = dayjs(item.endDateTime || item.date); // fallback if needed
+          return (
+            date.isSameOrAfter(dateRange[0], "day") &&
+            date.isSameOrBefore(dateRange[1], "day")
+          );
+        })
+      : dateWiseChartData;
+
+  const hasChartData = filteredChartData.some(
+    (item) =>
+      item.Completed > 0 ||
+      item.Pending > 0 ||
+      item["Not Started"] > 0 ||
+      item["Work in Progress"] > 0 ||
+      item["Under Review"] > 0 ||
+      item.Hold > 0
+  );
+
+  const handleDateRangeChange = (dates) => {
+    if (!dates || dates.length === 0) {
+      setDateRange(null); // Clear the filter if cancel is clicked
+    } else {
+      setDateRange(dates);
+    }
+  };
+
   return (
     <div className="container-fluid p-0">
       <style>{customStyles}</style>
@@ -1136,12 +1266,12 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                 <div
                   className="logout-popup"
                   onMouseLeave={() => setShowLogout(false)}
+                  style={{ border: "1px solid lightblue" }}
                 >
                   <div
                     style={{
                       fontWeight: "500",
                       marginBottom: "3px",
-                      fontSize: "18px",
                       color: "black",
                     }}
                     className="text-center "
@@ -1150,10 +1280,10 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                       <UserOutlined
                         className="gradient-background text-white "
                         style={{
-                          border: "2px solid white",
-                          padding: "10px",
+                          border: "1px solid white",
                           borderRadius: "40px",
-                          padding: "10px",
+                          padding: "9px",
+                          fontSize: "20px",
                         }}
                       />
                     </div>
@@ -1165,13 +1295,16 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                   </div>
                   <div
                     style={{
-                      borderBottom: "3px solid #f0f0f0",
-                      borderRadius: "50%",
-                      width: "150px",
+                      borderBottom: "2px solid #f0f0f0",
+                      width: "190px",
                     }}
                     className="mt-1"
                   ></div>
-                  <div className="logout-action mt-2 " onClick={handleLogout}>
+                  <div
+                    className="logout-action mt-2 "
+                    onClick={handleLogout}
+                    style={{ fontSize: "16px" }}
+                  >
                     <LogoutOutlined style={{ marginRight: "6px" }} />
                     <span>Logout</span>
                   </div>
@@ -1670,7 +1803,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                       className="stat-value"
                       style={{ fontSize: "1.8rem", fontWeight: "bold" }}
                     >
-                      {taskStats[key]} {/* ✅ Show actual task count */}
+                      {taskStats[key]}
                     </div>
                     <div className="stat-title">
                       {label} (
@@ -1698,10 +1831,10 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
             <Col xs={24}>
               <Card
                 title={
-                  <div className="d-flex align-items-center justify-content-center flex-wrap gap-3">
+                  <div className="d-flex align-items-center justify-content-center flex-wrap">
                     {/* Icon and Title */}
                     <div className="d-flex align-items-center">
-                      <CalendarOutlined
+                      <TableOutlined
                         style={{ fontSize: "24px", marginRight: "10px" }}
                       />
                       <span className="gradient-text">
@@ -1766,6 +1899,120 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                 />
               </Card>
             </Col>
+
+            <Col xs={24}>
+              <Card
+                title={
+                  <div className="d-flex align-items-center justify-content-center flex-wrap ">
+                    {/* Icon and Title */}
+                    <div className="d-flex align-items-center">
+                      <BarChartOutlined 
+                        style={{ fontSize: "24px", marginRight: "10px" }}
+                      />
+                      <span className="gradient-text">
+                        {employeeId} - {username}'s Task Status Chart
+                      </span>
+                    </div>
+
+                    {/* Centered Search Bar */}
+                    <div className="flex-grow-1 d-flex justify-content-center">
+                      <>
+                        <DatePicker.RangePicker
+                          format="YYYY-MM-DD"
+                          onChange={(dates) => setDateRange(dates)}
+                          allowClear
+                          className="me-lg-5"
+                        />
+                      </>
+                    </div>
+
+                    <Button
+                      type="primary"
+                      className="gradient-btn d-flex align-items-center"
+                      onClick={() => setShowChart(!showChart)}
+                    >
+                      {showChart ? "Hide Chart" : "View Chart"}
+                    </Button>
+                  </div>
+                }
+                bordered={false}
+                style={{
+                  width: "100%",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
+              >
+                <Space
+                  style={{
+                    marginBottom: 16,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {/* {hasChartData && (
+                  <>
+                    <Button onClick={() => setShowChart(!showChart)}>
+                      {showChart ? "Hide Chart" : "View Chart"}
+                    </Button>
+
+                    <DatePicker.RangePicker
+                      format="YYYY-MM-DD"
+                      onChange={(dates) => setDateRange(dates)}
+                      allowClear
+                    />
+                  </>
+                )} */}
+                </Space>
+
+                {showChart && hasChartData && (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart
+                      data={
+                        Array.isArray(filteredChartData)
+                          ? filteredChartData
+                          : []
+                      }
+                      margin={{ top: 20, right: 30, left: 10, bottom: 40 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis allowDecimals={false} />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Bar dataKey="Completed" stackId="a" fill="#33c755" />
+                      <Bar dataKey="Pending" stackId="a" fill="#f7971e" />
+                      <Bar dataKey="Not Started" stackId="a" fill="#e15260" />
+                      <Bar
+                        dataKey="Work in Progress"
+                        stackId="a"
+                        fill="#007bff"
+                      />
+                      <Bar dataKey="Under Review" stackId="a" fill="#8e44ad" />
+                      <Bar dataKey="Hold" stackId="a" fill="#6c757d" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+
+                {showChart && !hasChartData && (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      marginTop: "2rem",
+                      color: "#888",
+                    }}
+                    className="mb-1"
+                  >
+                    No data available
+                  </div>
+                )}
+              </Card>
+            </Col>
+
             <Col xs={24}>
               <Modal
                 title="Edit Task Data"
@@ -2029,50 +2276,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                       </Form.Item>
                     </Col>
 
-                    {/* <Col xs={24} md={12}>
-                      <Form.Item
-                        label={
-                          <span>
-                            <ClockCircleOutlined /> Status
-                          </span>
-                        }
-                        name="status"
-                        rules={[
-                          {
-                            required: true,
-                            message: "Please select status of work",
-                          },
-                        ]}
-                      >
-                        <Select placeholder="Select status" size="large">
-                          <Select.Option value="Not Started">
-                            <ClockCircleOutlined style={{ color: "red" }} /> Not
-                            Started
-                          </Select.Option>
-                          <Select.Option value="Work in Progress">
-                            <ClockCircleOutlined style={{ color: "blue" }} />{" "}
-                            Work in Progress
-                          </Select.Option>
-                          <Select.Option value="Under Review">
-                            <InfoCircleOutlined style={{ color: "purple" }} />{" "}
-                            Under Review
-                          </Select.Option>
-                          <Select.Option value="Pending">
-                            <ClockCircleOutlined style={{ color: "orange" }} />{" "}
-                            Pending
-                          </Select.Option>
-                          <Select.Option value="Hold">
-                            <ClockCircleOutlined style={{ color: "gray" }} />{" "}
-                            Hold
-                          </Select.Option>
-                          <Select.Option value="Completed">
-                            <CheckCircleOutlined style={{ color: "green" }} />{" "}
-                            Completed
-                          </Select.Option>
-                        </Select>
-                      </Form.Item>
-                    </Col> */}
-
                     <Col xs={24} md={12}>
                       <Form.Item
                         label={
@@ -2096,29 +2299,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                       </Form.Item>
                     </Col>
 
-                    {/* <Col xs={24} md={12}>
-                      <Form.Item
-                        label={
-                          <span>
-                            <FormOutlined /> Notes/Remarks
-                          </span>
-                        }
-                        name="notes"
-                        rules={[
-                          {
-                            required: false,
-                            message: "Please enter the Notes/Remarks",
-                          },
-                        ]}
-                      >
-                        <TextArea
-                          placeholder="Enter the notes/remarks"
-                          rows={2}
-                          size="large"
-                        />
-                      </Form.Item>
-                    </Col> */}
-                      <Col xs={24} md={12}>
+                    <Col xs={24} md={12}>
                       <Form.Item
                         label={
                           <span>
