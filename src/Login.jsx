@@ -67,7 +67,8 @@ const AuthForm = ({ setUser }) => {
   };
   
   return (
-    <Container className="d-flex justify-content-center align-items-center vh-100">
+    <div className="mt-2  border border-white">
+    <Container className="d-flex justify-content-center align-items-center vh-100 mt-4 mb-5">
       <Card
         className="p-4 border-light shadow login-card text-center"
         style={{ width: "400px", borderRadius: "12px" }}
@@ -236,6 +237,7 @@ const AuthForm = ({ setUser }) => {
         </p>
       </Card>
     </Container>
+    </div>
   );
 };
 
