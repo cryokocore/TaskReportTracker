@@ -136,7 +136,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?mode=dropdown"
+        "https://script.google.com/macros/s/AKfycbzmir592sP7vx25AVm_Q27bbaG6ldwqmRxhBOIKFdNnCe1fQpDG131q1qPCFtSMgefK/exec?mode=dropdown"
       );
       const data = await response.json();
       // console.log("fetchEmployeeIds:", data);
@@ -156,7 +156,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeData(true);
       setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?employeeId=${employeeId}`
+        `https://script.google.com/macros/s/AKfycbzmir592sP7vx25AVm_Q27bbaG6ldwqmRxhBOIKFdNnCe1fQpDG131q1qPCFtSMgefK/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
       // console.log("fetchEmployeeData:", data);
@@ -186,12 +186,13 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeAllData(true);
       // setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?mode=allTasks`
+        `https://script.google.com/macros/s/AKfycbzmir592sP7vx25AVm_Q27bbaG6ldwqmRxhBOIKFdNnCe1fQpDG131q1qPCFtSMgefK/exec?mode=allTasks`
       );
       const data = await response.json();
       // console.log("fetchEmployeeAllData:", data);
       if (Array.isArray(data)) {
         setEmployeeAllData(data);
+        console.log(data);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
           isManualRefresh.current = false;
@@ -220,7 +221,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
     setExportAllEmployeeExcel(true);
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
+        "https://script.google.com/macros/s/AKfycbzmir592sP7vx25AVm_Q27bbaG6ldwqmRxhBOIKFdNnCe1fQpDG131q1qPCFtSMgefK/exec",
         {
           method: "POST",
           headers: {
@@ -1486,7 +1487,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
+        "https://script.google.com/macros/s/AKfycbzmir592sP7vx25AVm_Q27bbaG6ldwqmRxhBOIKFdNnCe1fQpDG131q1qPCFtSMgefK/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1561,7 +1562,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
+        "https://script.google.com/macros/s/AKfycbzmir592sP7vx25AVm_Q27bbaG6ldwqmRxhBOIKFdNnCe1fQpDG131q1qPCFtSMgefK/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1916,7 +1917,6 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
             <div className="employeeperformancediv">
               <h3
                 className="employee-performance-title gradient-text"
-                style={{ textDecoration: "underline" }}
               >
                 {" "}
                 <UserOutlined style={{ color: "#5c258d" }} /> Employee
@@ -1947,6 +1947,9 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                         <strong>
                           {emp.name}-{emp.id}
                         </strong>
+                        <div>
+                          {emp.designation} <br /> {emp.mailid}
+                        </div>
                         <div
                           className="progress-performance-bar"
                           percent={percentage}
@@ -1972,9 +1975,12 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                         {getInitials(emp.name)}
                       </Avatar>
                       <div className="employee-info">
-                        <strong>
+                      <strong>
                           {emp.name}-{emp.id}
                         </strong>
+                        <div>
+                          {emp.designation} <br /> {emp.mailid}
+                        </div>
                         <div
                           className="progress-performance-bar"
                           percent={percentage}
@@ -2000,9 +2006,12 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                         {getInitials(emp.name)}
                       </Avatar>
                       <div className="employee-info">
-                        <strong>
+                      <strong>
                           {emp.name}-{emp.id}
                         </strong>
+                        <div>
+                          {emp.designation} <br /> {emp.mailid}
+                        </div>
                         <div
                           className="progress-performance-bar"
                           percent={percentage}
@@ -2032,7 +2041,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                     <span className="mt-1">
                       <IdcardOutlined style={{ fontSize: 25 }} />
                     </span>
-                    <span className="ms-1 ">Please select the employee Id</span>
+                    <span className="ms-1 ">Please select the employee</span>
                   </>
                 }
               >
@@ -2045,7 +2054,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                   >
                     {employeeList.map((emp) => (
                       <Option key={emp.id} value={emp.id}>
-                        {emp.id} - {emp.name}
+                        {emp.id} - {emp.name} - {emp.designation}
                       </Option>
                     ))}
                   </Select>
@@ -3416,7 +3425,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                 </Form>
               </Modal> */}
           </Col>
-          <Col xs={24} className="mt-3">
+          <Col xs={24} className="mt-4 mb-5">
             <Card
               title={
                 <div className="d-flex align-items-center justify-content-center flex-wrap ">
@@ -3521,7 +3530,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                     marginTop: "2rem",
                     color: "#888",
                   }}
-                  className="mb-1"
+                  className="mb-3"
                 >
                   No data available
                 </div>
