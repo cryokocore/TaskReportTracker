@@ -112,6 +112,8 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
   const [showChart, setShowChart] = useState(true);
   const [dateRange, setDateRange] = useState([null, null]);
+  const employeeDesignation = user?.designation;
+  const employeeMail = user?.mailid;
   const getSocialMediaIcon = (type) => {
     switch (type) {
       case "Facebook":
@@ -181,7 +183,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
       const text = await response.text();
 
@@ -305,7 +307,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -389,7 +391,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -997,7 +999,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       cursor: pointer;
       transition: all 0.2s ease;
       border: 2px solid #f7f5f5;
-      width: 200px;
       height: auto
     }
     
@@ -1290,7 +1291,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
                     <div className="gradient-text mt-1">
                       Hello, <br />
-                      {username}!<br />({employeeId})
+                      {username}!<br />{employeeId} <br />{employeeDesignation}<br />{employeeMail}
                     </div>
                   </div>
                   <div

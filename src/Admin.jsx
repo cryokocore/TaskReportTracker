@@ -17,6 +17,7 @@ import {
   Drawer,
   DatePicker,
   Modal,
+  Space,
 } from "antd";
 import TextArea from "antd/es/input/TextArea";
 
@@ -46,6 +47,7 @@ import {
   PlusOutlined,
   DeleteOutlined,
   TableOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "./App.css";
@@ -60,12 +62,21 @@ import {
 import logo from "./Images/stratify-logo.png";
 import * as XLSX from "xlsx-js-style";
 import { saveAs } from "file-saver";
-
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 const { Header, Content } = Layout;
 const { Option } = Select;
 const { Title } = Typography;
 
-const Admin = ({ username, setUser, user }) => {
+const Admin = ({ username, setUser, user, designation, mailid }) => {
   const [employeeIds, setEmployeeIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -75,7 +86,8 @@ const Admin = ({ username, setUser, user }) => {
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [employeeData, setEmployeeData] = useState([]);
   const [employeeAllData, setEmployeeAllData] = useState([]);
-
+  const [showChart, setShowChart] = useState(true);
+  const [dateRange, setDateRange] = useState([null, null]);
   const [searchText, setSearchText] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(null);
@@ -94,8 +106,7 @@ const Admin = ({ username, setUser, user }) => {
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [dropdownEmployeeId, setDropdownEmployeeId] = useState("");
-  const [defaultDropdownEmployeeId, setDefaultDropdownEmployeeId] =
-    useState("");
+  const [defaultDropdownEmployeeId, setDefaultDropdownEmployeeId] = useState("");
   const [linkDateTime, setLinkDateTime] = useState(null);
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
   const [isOtherUpdateLoading, setIsOtherUpdateLoading] = useState(false);
@@ -103,7 +114,9 @@ const Admin = ({ username, setUser, user }) => {
   const [dateTime, setDateTime] = useState(null);
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
-
+  const [exportAllEmployeeExcel, setExportAllEmployeeExcel] = useState(false);
+  const employeeDesignation = user?.designation;
+  const employeeMail = user?.mailid;
   const selectedEmployeeName = employeeList.find(
     (emp) => emp.id === selectedEmployee
   )?.name;
@@ -123,10 +136,10 @@ const Admin = ({ username, setUser, user }) => {
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?mode=dropdown"
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?mode=dropdown"
       );
       const data = await response.json();
-      console.log("fetchEmployeeIds:", data)
+      // console.log("fetchEmployeeIds:", data);
 
       if (data.success) {
         setEmployeeList(data.data);
@@ -137,17 +150,17 @@ const Admin = ({ username, setUser, user }) => {
 
   const fetchEmployeeData = async (employeeId) => {
     setRefreshing(true);
-    console.log(employeeId)
+    // console.log(employeeId);
 
     try {
       setLoadingEmployeeData(true);
       setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?employeeId=${employeeId}`
+        `https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
-      console.log("fetchEmployeeData:", data);
-      console.log("Employee Id", employeeId);
+      // console.log("fetchEmployeeData:", data);
+      // console.log("Employee Id", employeeId);
       if (Array.isArray(data.tasks)) {
         setEmployeeData(data.tasks);
         if (isManualRefresh.current) {
@@ -173,10 +186,10 @@ const Admin = ({ username, setUser, user }) => {
       setLoadingEmployeeAllData(true);
       // setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?mode=allTasks`
+        `https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?mode=allTasks`
       );
       const data = await response.json();
-      console.log("fetchEmployeeAllData:", data);
+      // console.log("fetchEmployeeAllData:", data);
       if (Array.isArray(data)) {
         setEmployeeAllData(data);
         if (isManualRefresh.current) {
@@ -194,19 +207,80 @@ const Admin = ({ username, setUser, user }) => {
       setLoadingEmployeeAllData(false);
     }
   };
+  // const getInitials = (name) => {
+  //   return name
+  //     .split(" ")
+  //     .map((n) => n[0])
+  //     .join("")
+  //     .slice(0, 2)
+  //     .toUpperCase();
+  // };
+
+  const ExportExcelAllUser = async () => {
+    setExportAllEmployeeExcel(true);
+    try {
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            action: "exportToExcel",
+          }).toString(),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success) {
+        window.open(result.downloadUrl, "_blank");
+      } else {
+        message.error(result.error || "Export failed");
+      }
+    } catch (err) {
+      message.error("Something went wrong");
+    }
+    finally{
+      setExportAllEmployeeExcel(false);
+    }
+  };
+
   const getInitials = (name) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
+    if (!name || typeof name !== "string") return "";
+
+    const words = name.trim().split(" ").filter(Boolean);
+
+    if (words.length === 1) {
+      return words[0].slice(0, 2).toUpperCase(); // First 2 letters of one word
+    }
+
+    return (words[0][0] + words[1][0]).toUpperCase(); // First letter of first two words
   };
 
   const calculateCompletedPercentage = (tasks = []) => {
     const completed = tasks.filter((t) => t.Status === "Completed").length;
     const total = tasks.length;
-    const percentage = total ? Math.round((completed / total) * 100) : 0;
+    const percentage = total ? ((completed / total) * 100).toFixed(1) : 0.0;
     return { completed, total, percentage };
+  };
+
+  const calculatePendingPercentage = (tasks = []) => {
+    const pending = tasks.filter((t) => t.Status === "Pending").length;
+    const total = tasks.length;
+    const percentage = total ? ((pending / total) * 100).toFixed(1) : 0.0;
+    return { pending, total, percentage };
+  };
+
+  const calculateWorkInProgressPercentage = (tasks = []) => {
+    const workInProgress = tasks.filter(
+      (t) => t.Status === "Work in Progress"
+    ).length;
+    const total = tasks.length;
+    const percentage = total
+      ? ((workInProgress / total) * 100).toFixed(1)
+      : 0.0;
+    return { workInProgress, total, percentage };
   };
 
   const handleLogout = () => {
@@ -473,7 +547,7 @@ const Admin = ({ username, setUser, user }) => {
           title: "Link Posted Date & Time",
           dataIndex: "linkPostedDateTime",
           key: "linkPostedDateTime",
-          width: 180,
+          width: 200,
           sorter: (a, b) =>
             new Date(a.linkPostedDateTime) - new Date(b.linkPostedDateTime),
 
@@ -483,14 +557,14 @@ const Admin = ({ username, setUser, user }) => {
           title: "Total Link Count",
           dataIndex: "totalLinkCount",
           key: "totalLinkCount",
-          width: 100,
+          width: 150,
           render: (text) => <Tooltip title={text}>{text}</Tooltip>,
         },
         {
           title: "Status",
           dataIndex: "status",
           key: "status",
-          width: 120,
+          width: 250,
           render: (text) => {
             const icon = getStatusIcon(text);
             return (
@@ -614,8 +688,18 @@ const Admin = ({ username, setUser, user }) => {
           title: "Status",
           dataIndex: "status",
           key: "status",
-          width: 120,
-          render: (text) => <Tooltip title={text}>{text}</Tooltip>,
+          width: 200,
+          // render: (text) => <Tooltip title={text}>{text}</Tooltip>,
+          render: (text) => {
+            const icon = getStatusIcon(text);
+            return (
+              <Tooltip title={text}>
+                <span>
+                  {icon} {text}
+                </span>
+              </Tooltip>
+            );
+          },
         },
         {
           title: "Assigned By",
@@ -824,6 +908,72 @@ const Admin = ({ username, setUser, user }) => {
 
   // Usage example
   const columns = getColumns(selectedEmployee);
+
+  const groupedByDate = {};
+
+  sortedData.forEach((item) => {
+    const start =
+      item.startDateTime && item.startDateTime !== "-"
+        ? dayjs(item.startDateTime)
+        : null;
+    const end =
+      item.endDateTime && item.endDateTime !== "-"
+        ? dayjs(item.endDateTime)
+        : start;
+
+    if (!start || !end) return;
+
+    const status = item.status;
+
+    for (
+      let date = start.clone();
+      date.isSameOrBefore(end, "day");
+      date = date.add(1, "day")
+    ) {
+      const dateStr = date.format("YYYY-MM-DD");
+
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = {
+          date: dateStr,
+          Completed: 0,
+          Pending: 0,
+          "Not Started": 0,
+          "Work in Progress": 0,
+          "Under Review": 0,
+          Hold: 0,
+        };
+      }
+
+      if (groupedByDate[dateStr][status] !== undefined) {
+        groupedByDate[dateStr][status]++;
+      }
+    }
+  });
+
+  const dateWiseChartData = Object.values(groupedByDate).sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  const filteredChartData =
+    Array.isArray(dateRange) && dateRange[0] && dateRange[1]
+      ? dateWiseChartData.filter((item) => {
+          const date = dayjs(item.endDateTime || item.date); // fallback if needed
+          return (
+            date.isSameOrAfter(dateRange[0], "day") &&
+            date.isSameOrBefore(dateRange[1], "day")
+          );
+        })
+      : dateWiseChartData;
+
+  const hasChartData = filteredChartData.some(
+    (item) =>
+      item.Completed > 0 ||
+      item.Pending > 0 ||
+      item["Not Started"] > 0 ||
+      item["Work in Progress"] > 0 ||
+      item["Under Review"] > 0 ||
+      item.Hold > 0
+  );
   const handleExport = () => {
     const exportData = filteredData.map(({ key, ...rest }) => {
       const newRow = {};
@@ -1040,7 +1190,6 @@ const Admin = ({ username, setUser, user }) => {
       cursor: pointer;
       transition: all 0.2s ease;
       border: 2px solid #f7f5f5;
-      width: 200px;
       height: auto;
     }
     
@@ -1248,6 +1397,16 @@ const Admin = ({ username, setUser, user }) => {
   };
 
   const taskStats = getTaskStats();
+
+  const chartData = [
+    { name: "Completed", value: taskStats.completed },
+    { name: "Pending", value: taskStats.pending },
+    { name: "Not Started", value: taskStats.notStarted },
+    { name: "Work in Progress", value: taskStats.workinprogress },
+    { name: "Under Review", value: taskStats.underReview },
+    { name: "Hold", value: taskStats.hold },
+  ];
+
   const handleManualRefresh = () => {
     if (!selectedEmployee) {
       message.warning("Please select an employee first.");
@@ -1327,7 +1486,7 @@ const Admin = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1402,7 +1561,7 @@ const Admin = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1638,7 +1797,12 @@ const Admin = ({ username, setUser, user }) => {
                       style={{ fontSize: "15px" }}
                     >
                       Hello, <br />
-                      {username}!<br />({employeeId})
+                      {username}!<br />
+                      {employeeId}
+                      <br />
+                      {employeeDesignation}
+                      <br />
+                      {employeeMail}
                     </div>
                   </div>
                   <div
@@ -1660,6 +1824,201 @@ const Admin = ({ username, setUser, user }) => {
         </Navbar>
 
         <Content className="container mt-5 pt-5">
+          {/* <Row>
+          <div className="employee-performance-card">
+            <h3 className="gradient-text">Completed Task Status</h3>
+            {employeeAllData.map((emp) => {
+              const { completed, total, percentage } =
+                calculateCompletedPercentage(emp.tasks);
+              return (
+                <div key={emp.id} className="employee-performance-item mt-3">
+                  <Avatar style={{ backgroundColor: "#662D91" }}>
+                    {getInitials(emp.name)}
+                  </Avatar>
+                  <div className="employee-info">
+                    <strong>{emp.name}-{emp.id}</strong>
+                    <div
+                      className="progress-performance-bar"
+                      percent={percentage}
+                      showInfo={false}
+                      strokeColor="#a167ff"
+                      trailColor="#d1c2f0"
+                    />
+                    <span style={{ fontSize: "12px", color: "#666" }}>
+                      {completed} of {total} tasks completed
+                    </span>
+                  </div>
+                  <div className="percentage">{percentage}%</div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="employee-performance-card">
+            <h3 className="gradient-text">Pending Task Status</h3>
+            {employeeAllData.map((emp) => {
+              const { pending, total, percentage } =
+                calculatePendingPercentage(emp.tasks);
+              return (
+                <div key={emp.id} className="employee-performance-item mt-3">
+                  <Avatar style={{ backgroundColor: "#662D91" }}>
+                    {getInitials(emp.name)}
+                  </Avatar>
+                  <div className="employee-info">
+                    <strong>{emp.name}-{emp.id}</strong>
+                    <div
+                      className="progress-performance-bar"
+                      percent={percentage}
+                      showInfo={false}
+                      strokeColor="#a167ff"
+                      trailColor="#d1c2f0"
+                    />
+                    <span style={{ fontSize: "12px", color: "#666" }}>
+                      {pending} of {total} tasks pending
+                    </span>
+                  </div>
+                  <div className="percentage">{percentage}%</div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="employee-performance-card">
+            <h3 className="gradient-text"> In-progress Task Status</h3>
+            {employeeAllData.map((emp) => {
+              const { workInProgress, total, percentage } =
+              calculateWorkInProgressPercentage(emp.tasks);
+              return (
+                <div key={emp.id} className="employee-performance-item mt-3">
+                  <Avatar style={{ backgroundColor: "#662D91" }}>
+                    {getInitials(emp.name)}
+                  </Avatar>
+                  <div className="employee-info">
+                    <strong>{emp.name}-{emp.id}</strong>
+                    <div
+                      className="progress-performance-bar"
+                      percent={percentage}
+                      showInfo={false}
+                      strokeColor="#6006f3"
+                      trailColor="#d1c2f0"
+                    />
+                    <span style={{ fontSize: "12px", color: "#666" }}>
+                      {workInProgress} of {total} tasks work in progress
+                    </span>
+                  </div>
+                  <div className="percentage">{percentage}%</div>
+                </div>
+              );
+            })}
+          </div>
+       
+          </Row> */}
+
+          <div className="employee-performance-title-wrapper">
+            <div className="employeeperformancediv">
+              <h3
+                className="employee-performance-title gradient-text"
+                style={{ textDecoration: "underline" }}
+              >
+                {" "}
+                <UserOutlined style={{ color: "#5c258d" }} /> Employee
+                Performance{" "}
+              </h3>{" "}
+              <Button
+                type="primary"
+                onClick={ExportExcelAllUser}
+                className="gradient-btn"
+                loading={exportAllEmployeeExcel}
+              >
+               
+                {exportAllEmployeeExcel ? "Exporting..." : " Export all employee data to excel"}
+              </Button>
+            </div>
+            <Row className="employee-performance-row mt-1">
+              <div className="employee-performance-card">
+                <h4 className="gradient-text m-0 p-0">Completed Task Status</h4>
+                {employeeAllData.map((emp) => {
+                  const { completed, total, percentage } =
+                    calculateCompletedPercentage(emp.tasks);
+                  return (
+                    <div key={emp.id} className="employee-performance-item">
+                      <Avatar style={{ backgroundColor: "#662D91" }}>
+                        {getInitials(emp.name)}
+                      </Avatar>
+                      <div className="employee-info">
+                        <strong>
+                          {emp.name}-{emp.id}
+                        </strong>
+                        <div
+                          className="progress-performance-bar"
+                          percent={percentage}
+                        />
+                        <span>
+                          {completed} of {total} tasks completed
+                        </span>
+                      </div>
+                      <div className="percentage">{percentage}%</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="employee-performance-card">
+                <h4 className="gradient-text">Pending Task Status</h4>
+                {employeeAllData.map((emp) => {
+                  const { pending, total, percentage } =
+                    calculatePendingPercentage(emp.tasks);
+                  return (
+                    <div key={emp.id} className="employee-performance-item">
+                      <Avatar style={{ backgroundColor: "#662D91" }}>
+                        {getInitials(emp.name)}
+                      </Avatar>
+                      <div className="employee-info">
+                        <strong>
+                          {emp.name}-{emp.id}
+                        </strong>
+                        <div
+                          className="progress-performance-bar"
+                          percent={percentage}
+                        />
+                        <span>
+                          {pending} of {total} tasks pending
+                        </span>
+                      </div>
+                      <div className="percentage">{percentage}%</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="employee-performance-card">
+                <h4 className="gradient-text">In-progress Task Status</h4>
+                {employeeAllData.map((emp) => {
+                  const { workInProgress, total, percentage } =
+                    calculateWorkInProgressPercentage(emp.tasks);
+                  return (
+                    <div key={emp.id} className="employee-performance-item">
+                      <Avatar style={{ backgroundColor: "#662D91" }}>
+                        {getInitials(emp.name)}
+                      </Avatar>
+                      <div className="employee-info">
+                        <strong>
+                          {emp.name}-{emp.id}
+                        </strong>
+                        <div
+                          className="progress-performance-bar"
+                          percent={percentage}
+                        />
+                        <span>
+                          {workInProgress} of {total} tasks work in progress
+                        </span>
+                      </div>
+                      <div className="percentage">{percentage}%</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Row>
+          </div>
+
           <Row
             gutter={[24, 24]}
             justify="center"
@@ -3057,34 +3416,118 @@ const Admin = ({ username, setUser, user }) => {
                 </Form>
               </Modal> */}
           </Col>
-          <div className="employee-performance-card">
-            <h2>Employee Performance</h2>
-            {employeeAllData.map((emp) => {
-              const { completed, total, percentage } =
-                calculateCompletedPercentage(emp.tasks);
-              return (
-                <div key={emp.id} className="employee-performance-item">
-                  <Avatar style={{ backgroundColor: "#a167ff" }}>
-                    {getInitials(emp.name)}
-                  </Avatar>
-                  <div className="employee-info">
-                    <strong>{emp.name}</strong>
-                    <div
-                      className="progress-bar"
-                      percent={percentage}
-                      showInfo={false}
-                      strokeColor="#a167ff"
-                      trailColor="#d1c2f0"
+          <Col xs={24} className="mt-3">
+            <Card
+              title={
+                <div className="d-flex align-items-center justify-content-center flex-wrap ">
+                  {/* Icon and Title */}
+                  <div className="d-flex align-items-center">
+                    <BarChartOutlined
+                      style={{ fontSize: "24px", marginRight: "10px" }}
                     />
-                    <span style={{ fontSize: "12px", color: "#666" }}>
-                      {completed} of {total} tasks completed
+                    <span className="gradient-text">
+                      {selectedEmployeeName && selectedEmployeeId
+                        ? ` ${selectedEmployeeId} - ${selectedEmployeeName}'s Task Status Chart`
+                        : ""}
                     </span>
                   </div>
-                  <div className="percentage">{percentage}%</div>
+
+                  {/* Centered Search Bar */}
+                  <div className="flex-grow-1 d-flex justify-content-center">
+                    <>
+                      <DatePicker.RangePicker
+                        format="YYYY-MM-DD"
+                        onChange={(dates) => setDateRange(dates)}
+                        allowClear
+                        className="me-lg-5"
+                      />
+                    </>
+                  </div>
+
+                  <Button
+                    type="primary"
+                    className="gradient-btn d-flex align-items-center"
+                    onClick={() => setShowChart(!showChart)}
+                  >
+                    {showChart ? "Hide Chart" : "View Chart"}
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
+              }
+              bordered={false}
+              style={{
+                width: "100%",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              }}
+            >
+              <Space
+                style={{
+                  marginBottom: 16,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                }}
+              >
+                {/* {hasChartData && (
+                            <>
+                              <Button onClick={() => setShowChart(!showChart)}>
+                                {showChart ? "Hide Chart" : "View Chart"}
+                              </Button>
+          
+                              <DatePicker.RangePicker
+                                format="YYYY-MM-DD"
+                                onChange={(dates) => setDateRange(dates)}
+                                allowClear
+                              />
+                            </>
+                          )} */}
+              </Space>
+
+              {showChart && hasChartData && (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart
+                    data={
+                      Array.isArray(filteredChartData) ? filteredChartData : []
+                    }
+                    margin={{ top: 20, right: 30, left: 10, bottom: 40 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis allowDecimals={false} />
+                    <RechartsTooltip />
+                    <Legend />
+                    <Bar dataKey="Completed" stackId="a" fill="#33c755" />
+                    <Bar dataKey="Pending" stackId="a" fill="#f7971e" />
+                    <Bar dataKey="Not Started" stackId="a" fill="#e15260" />
+                    <Bar
+                      dataKey="Work in Progress"
+                      stackId="a"
+                      fill="#007bff"
+                    />
+                    <Bar dataKey="Under Review" stackId="a" fill="#8e44ad" />
+                    <Bar dataKey="Hold" stackId="a" fill="#6c757d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+
+              {showChart && !hasChartData && (
+                <div
+                  style={{
+                    textAlign: "center",
+                    marginTop: "2rem",
+                    color: "#888",
+                  }}
+                  className="mb-1"
+                >
+                  No data available
+                </div>
+              )}
+            </Card>
+          </Col>
         </Content>
       </Layout>
     </div>

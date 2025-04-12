@@ -6,6 +6,8 @@ import {
   UserOutlined,
   LockOutlined,
   IdcardOutlined,
+  MailOutlined,
+  InfoCircleOutlined
 } from "@ant-design/icons";
 import { Container, Card, Row, Col } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -20,17 +22,18 @@ const AuthForm = ({ setUser }) => {
 
   const handleSubmit = async (values) => {
     setLoading(true);
-    const { employeeId, username, password } = values;
+    const { employeeId, username, password, designation, mailid } = values;
 
     const payload = isSignUp
-      ? { action: "register", employeeId, username, password }
+      ? { action: "register", employeeId, username, password, designation, mailid }
       : { action: "login", employeeId, password };
+
 
     const formBody = new URLSearchParams(payload).toString();
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -51,7 +54,7 @@ const AuthForm = ({ setUser }) => {
           setIsSignUp(false);
           form.resetFields(); // Optional: Clear form after signup
         } else {
-          setUser({ username: result.username, employeeId: result.employeeId });
+          setUser({ username: result.username, employeeId: result.employeeId, designation: result.designation, mailid: result.mailid});
           form.resetFields();
         }
       } else {
@@ -102,7 +105,7 @@ const AuthForm = ({ setUser }) => {
             />
           </Form.Item>
 
-          {isSignUp && (
+          {isSignUp && (<>
             <Form.Item
               name="username"
               rules={[{ required: true, message: "Please enter your name" }]}
@@ -113,6 +116,35 @@ const AuthForm = ({ setUser }) => {
                 size="large"
               />
             </Form.Item>
+
+            <Form.Item
+              name="designation"
+              rules={[{ required: true, message: "Please enter your desgination" }]}
+            >
+              <Input
+                prefix={<InfoCircleOutlined />}
+                placeholder="Desgination"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="mailid"
+              rules={[{ required: true, message: "Please enter your stratify email id", 
+                pattern:
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message:
+                  "Please enter a valid email id",
+               }]}
+            >
+              <Input
+                prefix={<MailOutlined />}
+                placeholder="Stratify Email Id"
+                size="large"
+              />
+            </Form.Item>
+
+            </>
           )}
 
           <Form.Item
@@ -123,7 +155,7 @@ const AuthForm = ({ setUser }) => {
                 ? [
                     {
                       pattern:
-                        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,15}$/,
+                        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*.?&])[A-Za-z\d@$!%*.?&]{8,15}$/,
                       message:
                         "Password must be 8-15 characters with uppercase, lowercase, number, and special character",
                     },

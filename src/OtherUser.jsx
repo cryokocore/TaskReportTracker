@@ -58,7 +58,8 @@ import {
   PauseCircleOutlined,
   DownloadOutlined,
   EditOutlined,
-  BarChartOutlined, TableOutlined
+  BarChartOutlined,
+  TableOutlined,
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -103,6 +104,8 @@ const OtherUser = ({ username, setUser, user }) => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [tableKey, setTableKey] = useState(0);
   const employeeId = user?.employeeId;
+  const employeeDesignation = user?.designation;
+  const employeeMail = user?.mailid;
   const [editingTask, setEditingTask] = useState(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [dropdownEmployeeId, setDropdownEmployeeId] = useState("");
@@ -182,7 +185,7 @@ const OtherUser = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
 
       const text = await response.text();
@@ -198,7 +201,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
         // setTableData(result);
         // setTableData(Array.isArray(result.tasks) ? result.tasks : []);
-        
+
         if (Array.isArray(result.tasks) && result.tasks.length > 0) {
           setTableData(result.tasks);
           if (isManualRefresh.current) {
@@ -209,7 +212,6 @@ const OtherUser = ({ username, setUser, user }) => {
           message.warning("No tasks found.");
           setTableData([]);
         }
-        
 
         console.log("Result", result);
 
@@ -286,7 +288,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -348,7 +350,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzZ6t1BItYYng2VFM_xXlrg8jUqM-qbXeA8Uyzd_TbvG4efSq0e1bkS5vK_zSlVTagvg/exec",
+        "https://script.google.com/macros/s/AKfycbzuJR-J2nkUFO3VPcru2TXgYPNvjahxM4AbXzAT9O82YEqudKF3BmcEwSoPR9Mi8bsX9w/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -404,38 +406,41 @@ const OtherUser = ({ username, setUser, user }) => {
   //   };
   // });
 
-  
   const formattedData = Array.isArray(tableData)
-  ? tableData.map((item, index) => {
-      const cleanedItem = Object.keys(item).reduce((acc, key) => {
-        acc[key.trim()] = item[key];
-        return acc;
-      }, {});
+    ? tableData.map((item, index) => {
+        const cleanedItem = Object.keys(item).reduce((acc, key) => {
+          acc[key.trim()] = item[key];
+          return acc;
+        }, {});
 
-      return {
-        key: index,
-        rowIndex: item.rowIndex,
-        clientName: cleanedItem["Client/Task Name"]?.trim(),
-        startDateTime: cleanedItem["Start Date & Time"]
-          ? dayjs(cleanedItem["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-          : "-",
-        endDateTime: cleanedItem["End Date & Time"]
-          ? dayjs(cleanedItem["End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
-          : "-",
-        duration:
-          cleanedItem["Duration"] &&
-          cleanedItem["Duration"] !== "1899-12-29T18:38:53.000Z"
-            ? cleanedItem["Duration"]
+        return {
+          key: index,
+          rowIndex: item.rowIndex,
+          clientName: cleanedItem["Client/Task Name"]?.trim(),
+          startDateTime: cleanedItem["Start Date & Time"]
+            ? dayjs(cleanedItem["Start Date & Time"]).format(
+                "YYYY-MM-DD HH:mm:ss"
+              )
             : "-",
-        details: cleanedItem["Details"]?.trim() || "-",
-        link: cleanedItem["Link"] || "N/A",
-        totalCount: cleanedItem["Total Count"] || "-",
-        status: cleanedItem["Status"],
-        assigned: cleanedItem["Assigned By"],
-        notes: cleanedItem["Notes/Remarks"] || "-",
-      };
-    })
-  : [];
+          endDateTime: cleanedItem["End Date & Time"]
+            ? dayjs(cleanedItem["End Date & Time"]).format(
+                "YYYY-MM-DD HH:mm:ss"
+              )
+            : "-",
+          duration:
+            cleanedItem["Duration"] &&
+            cleanedItem["Duration"] !== "1899-12-29T18:38:53.000Z"
+              ? cleanedItem["Duration"]
+              : "-",
+          details: cleanedItem["Details"]?.trim() || "-",
+          link: cleanedItem["Link"] || "N/A",
+          totalCount: cleanedItem["Total Count"] || "-",
+          status: cleanedItem["Status"],
+          assigned: cleanedItem["Assigned By"],
+          notes: cleanedItem["Notes/Remarks"] || "-",
+        };
+      })
+    : [];
 
   const statusMapping = {
     total: null,
@@ -503,41 +508,46 @@ const OtherUser = ({ username, setUser, user }) => {
       displayIndex: idx,
     }));
 
-    const groupedByDate = {};
+  const groupedByDate = {};
 
-    sortedData.forEach((item) => {
-      const start = item.startDateTime && item.startDateTime !== "-"
+  sortedData.forEach((item) => {
+    const start =
+      item.startDateTime && item.startDateTime !== "-"
         ? dayjs(item.startDateTime)
         : null;
-      const end = item.endDateTime && item.endDateTime !== "-"
+    const end =
+      item.endDateTime && item.endDateTime !== "-"
         ? dayjs(item.endDateTime)
         : start; // fallback to start if end is missing
-    
-      if (!start || !end) return;
-    
-      const status = item.status;
-    
-      for (let date = start.clone(); date.isSameOrBefore(end, "day"); date = date.add(1, "day")) {
-        const dateStr = date.format("YYYY-MM-DD");
-    
-        if (!groupedByDate[dateStr]) {
-          groupedByDate[dateStr] = {
-            date: dateStr,
-            Completed: 0,
-            Pending: 0,
-            "Not Started": 0,
-            "Work in Progress": 0,
-            "Under Review": 0,
-            Hold: 0,
-          };
-        }
-    
-        if (groupedByDate[dateStr][status] !== undefined) {
-          groupedByDate[dateStr][status]++;
-        }
+
+    if (!start || !end) return;
+
+    const status = item.status;
+
+    for (
+      let date = start.clone();
+      date.isSameOrBefore(end, "day");
+      date = date.add(1, "day")
+    ) {
+      const dateStr = date.format("YYYY-MM-DD");
+
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = {
+          date: dateStr,
+          Completed: 0,
+          Pending: 0,
+          "Not Started": 0,
+          "Work in Progress": 0,
+          "Under Review": 0,
+          Hold: 0,
+        };
       }
-    });
-    
+
+      if (groupedByDate[dateStr][status] !== undefined) {
+        groupedByDate[dateStr][status]++;
+      }
+    }
+  });
 
   const dateWiseChartData = Object.values(groupedByDate).sort(
     (a, b) => new Date(a.date) - new Date(b.date)
@@ -949,7 +959,6 @@ const OtherUser = ({ username, setUser, user }) => {
       cursor: pointer;
       transition: all 0.2s ease;
       border: 2px solid #f7f5f5;
-      width: 200px;
       height: auto;
       }
     
@@ -1136,7 +1145,12 @@ const OtherUser = ({ username, setUser, user }) => {
                       style={{ fontSize: "15px" }}
                     >
                       Hello, <br />
-                      {username}!<br />({employeeId})
+                      {username}!<br />
+                      {employeeId}
+                      <br />
+                      {employeeDesignation}
+                      <br />
+                      {employeeMail}
                     </div>
                   </div>
                   <div
@@ -1574,7 +1588,6 @@ const OtherUser = ({ username, setUser, user }) => {
                       </span>
                     </div>
 
-               
                     <div className="flex-grow-1 d-flex justify-content-center">
                       <>
                         <DatePicker.RangePicker
