@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   Layout,
   Select,
@@ -137,6 +137,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const [endDateTime, setEndDateTime] = useState(null);
   useEffect(() => {
     fetchEmployeeIds();
+
   }, []);
 
   useEffect(() => {
@@ -146,7 +147,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec?mode=dropdown"
+        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec?mode=dropdown"
       );
       const data = await response.json();
       // console.log("fetchEmployeeIds:", data);
@@ -166,11 +167,11 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeData(true);
       setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec?employeeId=${employeeId}`
+        `https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
-      // console.log("fetchEmployeeData:", data);
-      // console.log("Employee Id", employeeId);
+      console.log("fetchEmployeeData:", data);
+      console.log("Employee Id", employeeId);
       if (Array.isArray(data.tasks)) {
         setEmployeeData(data.tasks);
         if (isManualRefresh.current) {
@@ -196,7 +197,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeAllData(true);
       // setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec?mode=allTasks`
+        `https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec?mode=allTasks`
       );
       const data = await response.json();
       // console.log("fetchEmployeeAllData:", data);
@@ -227,11 +228,20 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   //     .toUpperCase();
   // };
 
+const sortedEmployeeList = [...employeeList].sort((a, b) =>
+  a.id.localeCompare(b.id)
+);
+
+const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
+  a.id.localeCompare(b.id)
+);
+  
+
   const ExportExcelAllUser = async () => {
     setExportAllEmployeeExcel(true);
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec",
+        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec",
         {
           method: "POST",
           headers: {
@@ -1590,7 +1600,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec",
+        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1665,7 +1675,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec",
+        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -2084,7 +2094,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
             <Row className="employee-performance-row mt-1">
               <div className="employee-performance-card">
                 <h4 className="gradient-text m-0 p-0">Completed Task Status</h4>
-                {employeeAllData.map((emp) => {
+                {sortedEmployeeData.map((emp) => {
                   const { completed, total, percentage } =
                     calculateCompletedPercentage(emp.tasks);
                   return (
@@ -2115,7 +2125,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
 
               <div className="employee-performance-card">
                 <h4 className="gradient-text">Pending Task Status</h4>
-                {employeeAllData.map((emp) => {
+                {sortedEmployeeData.map((emp) => {
                   const { pending, total, percentage } =
                     calculatePendingPercentage(emp.tasks);
                   return (
@@ -2146,7 +2156,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
 
               <div className="employee-performance-card">
                 <h4 className="gradient-text">In-progress Task Status</h4>
-                {employeeAllData.map((emp) => {
+                {sortedEmployeeData.map((emp) => {
                   const { workInProgress, total, percentage } =
                     calculateWorkInProgressPercentage(emp.tasks);
                   return (
@@ -2201,7 +2211,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                     placeholder="Select Employee"
                     onChange={fetchEmployeeData}
                   >
-                    {employeeList.map((emp) => (
+                    {sortedEmployeeList.map((emp) => (
                       <Option key={emp.id} value={emp.id}>
                         {emp.id} - {emp.name} - {emp.designation}
                       </Option>
@@ -2382,7 +2392,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                             setDropdownEmployeeId(value);
                           }}
                         >
-                          {employeeList.map((emp) => (
+                          {sortedEmployeeList.map((emp) => (
                             <Option key={emp.id} value={emp.id}>
                               {emp.id} - {emp.name}
                             </Option>
@@ -2677,7 +2687,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                             Defaultform.setFieldsValue({ empId: value });
                           }}
                         >
-                          {employeeList.map((emp) => (
+                          {sortedEmployeeList.map((emp) => (
                             <Option key={emp.id} value={emp.id}>
                               {emp.id} - {emp.name}
                             </Option>

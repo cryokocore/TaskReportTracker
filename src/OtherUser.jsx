@@ -77,6 +77,8 @@ import {
   faEnvelope,
   faCircleXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import timezone from "dayjs/plugin/timezone";
+
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor">
@@ -85,6 +87,8 @@ const XIcon = () => (
 );
 
 dayjs.extend(utc);
+dayjs.extend(timezone);
+
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
@@ -194,7 +198,7 @@ const OtherUser = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
 
       const text = await response.text();
@@ -284,20 +288,29 @@ const OtherUser = ({ username, setUser, user }) => {
     }
 
     const formData = new URLSearchParams();
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     formData.append("action", "otherUserSubmit");
     formData.append("employeeId", user.employeeId);
     formData.append("clientName", clientName);
     formData.append("link", link || "");
     formData.append("details", details || "N/A");
-    formData.append("startDateTime", startDateTime.toISOString());
-    formData.append("endDateTime", endDateTime.toISOString());
+    // formData.append("startDateTime", startDateTime.toISOString());
+    // formData.append("endDateTime", endDateTime.toISOString());
+    formData.append(
+      "startDateTime",
+      dayjs(startDateTime).tz(userTimeZone).format("YYYY-MM-DDTHH:mm:ss")
+    );
+    formData.append(
+      "endDateTime",
+      dayjs(endDateTime).tz(userTimeZone).format("YYYY-MM-DDTHH:mm:ss")
+    );
     formData.append("status", status);
     formData.append("assigned", assigned);
     formData.append("notes", notes || "");
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec",
+        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -359,7 +372,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzFnVZxG9yN0D0P2p4aj0pAenfTpUyznJsICSu8SdNlorflUmMPFn9lgVqyKLiSXf-eAg/exec",
+        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
