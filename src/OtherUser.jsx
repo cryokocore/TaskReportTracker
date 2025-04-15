@@ -75,7 +75,7 @@ import {
   faIdBadge,
   faSuitcase,
   faEnvelope,
-  faCircleXmark
+  faCircleXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
 const XIcon = () => (
@@ -124,7 +124,8 @@ const OtherUser = ({ username, setUser, user }) => {
   const [updateButton, setUpdateButton] = useState(false);
   const [dateRange, setDateRange] = useState([null, null]);
   const [showChart, setShowChart] = useState(true);
-
+  const [startDateFilter, setStartDateFilter] = useState(null);
+  const [endDateFilter, setEndDateFilter] = useState(null);
   const onFormChange = (changedValues, allValues) => {
     setEditingRecord((prev) => ({
       ...prev,
@@ -479,31 +480,64 @@ const OtherUser = ({ username, setUser, user }) => {
     }
   };
 
-  const filteredData = formattedData.filter((item) => {
-    if (isSearchActive) {
-      return Object.values(item).some((value) => {
-        if (!value) return false;
+  // const filteredData = formattedData.filter((item) => {
+  //   if (isSearchActive) {
+  //     return Object.values(item).some((value) => {
+  //       if (!value) return false;
 
+  //       const normalizedValue = value
+  //         .toString()
+  //         .toLowerCase()
+  //         .trim()
+  //         .replace(/\s+/g, ""); // Normalize spaces
+  //       const normalizedSearch = searchText
+  //         .toLowerCase()
+  //         .trim()
+  //         .replace(/\s+/g, "");
+
+  //       return normalizedValue.includes(normalizedSearch);
+  //     });
+  //   } else {
+  //     return (
+  //       !selectedStatus ||
+  //       item.status?.toLowerCase().trim() ===
+  //         selectedStatus.toLowerCase().trim()
+  //     );
+  //   }
+  // });
+
+  const filteredData = formattedData.filter((item) => {
+    let match = true;
+
+    if (isSearchActive) {
+      match = Object.values(item).some((value) => {
+        if (!value) return false;
         const normalizedValue = value
           .toString()
           .toLowerCase()
-          .trim()
-          .replace(/\s+/g, ""); // Normalize spaces
-        const normalizedSearch = searchText
-          .toLowerCase()
-          .trim()
           .replace(/\s+/g, "");
-
+        const normalizedSearch = searchText.toLowerCase().replace(/\s+/g, "");
         return normalizedValue.includes(normalizedSearch);
       });
-    } else {
-      return (
-        !selectedStatus ||
-        item.status?.toLowerCase().trim() ===
-          selectedStatus.toLowerCase().trim()
-      );
+    } else if (selectedStatus) {
+      match = item.status?.toLowerCase() === selectedStatus.toLowerCase();
     }
+
+    // Apply date filtering
+    if (match) {
+      const taskStart = dayjs(item.startDateTime);
+
+      if (startDateFilter && taskStart.isBefore(startDateFilter, "day")) {
+        match = false;
+      }
+      if (endDateFilter && taskStart.isAfter(endDateFilter, "day")) {
+        match = false;
+      }
+    }
+
+    return match;
   });
+
   const sortedData = [...filteredData]
     .filter((item) => item.startDateTime && item.startDateTime !== "-")
     .sort((a, b) => {
@@ -1198,9 +1232,12 @@ const OtherUser = ({ username, setUser, user }) => {
                   className="logout-popup"
                   // onMouseLeave={() => setShowLogout(false)}
                 >
-                     
                   <div className="logout-header">
-                  <FontAwesomeIcon icon={faCircleXmark} className="close-button" onClick={()=>setShowLogout(false)}/>
+                    <FontAwesomeIcon
+                      icon={faCircleXmark}
+                      className="close-button"
+                      onClick={() => setShowLogout(false)}
+                    />
 
                     <div className="header-content">
                       <UserOutlined
@@ -1218,18 +1255,18 @@ const OtherUser = ({ username, setUser, user }) => {
                     </div>
                   </div>
 
-                    <div className="info-row mt-2">
-                      <FontAwesomeIcon icon={faIdBadge} size="xl" />
-                      <span className="ms-2">{employeeId}</span>
-                    </div>
-                    <div className="info-row">
-                      <FontAwesomeIcon icon={faSuitcase} size="xl"/>{" "}
-                      <span className="ms-2">{employeeDesignation}</span>
-                    </div>
-                    <div className="info-row">
-                    <FontAwesomeIcon icon={faEnvelope} size="xl"/>
-                      <span className="ms-2">{employeeMail}</span>
-                    </div>
+                  <div className="info-row mt-2">
+                    <FontAwesomeIcon icon={faIdBadge} size="xl" />
+                    <span className="ms-2">{employeeId}</span>
+                  </div>
+                  <div className="info-row">
+                    <FontAwesomeIcon icon={faSuitcase} size="xl" />{" "}
+                    <span className="ms-2">{employeeDesignation}</span>
+                  </div>
+                  <div className="info-row">
+                    <FontAwesomeIcon icon={faEnvelope} size="xl" />
+                    <span className="ms-2">{employeeMail}</span>
+                  </div>
 
                   <div className="logout-action mt-3" onClick={handleLogout}>
                     <LogoutOutlined style={{ marginRight: "6px" }} />
@@ -1580,9 +1617,7 @@ const OtherUser = ({ username, setUser, user }) => {
                   <div className="d-flex align-items-center justify-content-center flex-wrap gap-3">
                     {/* Icon and Title */}
                     <div className="d-flex align-items-center">
-                      <TableOutlined
-                        style={{ fontSize: "24px", marginRight: "10px" }}
-                      />
+                      <TableOutlined style={{ fontSize: "24px", marginRight: "10px" }} />
                       <span className="gradient-text">
                         {employeeId} - {username}'s Task Report
                       </span>
@@ -1598,8 +1633,50 @@ const OtherUser = ({ username, setUser, user }) => {
                         // onChange={(e) => setSearchText(e.target.value)}
                         onChange={handleSearchChange}
                         disabled={selectedStatus !== null}
-                        style={{ width: 500 }}
+                        style={{ width: 400 }}
                       />
+                      <div>
+                        <DatePicker
+                          placeholder="Start Date"
+                          value={startDateFilter}
+                          onChange={(date) => {
+                            setStartDateFilter(date);
+                            setSearchText("");
+                            setIsSearchActive(false);
+                            setSelectedStatus(null);
+                            if (
+                              endDateFilter &&
+                              date &&
+                              date.isAfter(endDateFilter, "day") // Compare with day precision
+                            ) {
+                              message.error("Start date cannot be after end date.");
+                            }
+                          }}
+                          disabled={isSearchActive || selectedStatus !== null}
+                          className="ms-2"
+                        />
+
+                        <DatePicker
+                          placeholder="End Date"
+                          value={endDateFilter}
+                          onChange={(date) => {
+                            setEndDateFilter(date);
+                            setSearchText("");
+                            setIsSearchActive(false);
+                            setSelectedStatus(null);
+                            if (
+                              startDateFilter &&
+                              date &&
+                              date.isBefore(startDateFilter, "day") // Compare with day precision
+                            ) {
+                              message.error("End date cannot be before start date.");
+                            }
+                          }}
+                          style={{ marginRight: 16 }}
+                          disabled={isSearchActive || selectedStatus !== null}
+                          className="ms-2"
+                        />
+                      </div>
                     </div>
 
                     {/* Refresh Button */}
@@ -1660,14 +1737,14 @@ const OtherUser = ({ username, setUser, user }) => {
                     </div>
 
                     <div className="flex-grow-1 d-flex justify-content-center">
-                      <>
+                      {/* <>
                         <DatePicker.RangePicker
                           format="YYYY-MM-DD"
                           onChange={(dates) => setDateRange(dates)}
                           allowClear
                           className="me-lg-5"
                         />
-                      </>
+                      </> */}
                     </div>
 
                     <Button

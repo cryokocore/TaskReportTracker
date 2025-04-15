@@ -64,7 +64,7 @@ import {
   faIdBadge,
   faSuitcase,
   faEnvelope,
-  faCircleXmark
+  faCircleXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import logo from "./Images/stratify-logo.png";
 import * as XLSX from "xlsx-js-style";
@@ -113,7 +113,8 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const [dropdownEmployeeId, setDropdownEmployeeId] = useState("");
-  const [defaultDropdownEmployeeId, setDefaultDropdownEmployeeId] = useState("");
+  const [defaultDropdownEmployeeId, setDefaultDropdownEmployeeId] =
+    useState("");
   const [linkDateTime, setLinkDateTime] = useState(null);
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
   const [isOtherUpdateLoading, setIsOtherUpdateLoading] = useState(false);
@@ -122,6 +123,8 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(true);
   const [exportAllEmployeeExcel, setExportAllEmployeeExcel] = useState(false);
+  const [startDateFilter, setStartDateFilter] = useState(null);
+  const [endDateFilter, setEndDateFilter] = useState(null);
   const employeeDesignation = user?.designation;
   const employeeMail = user?.mailid;
   const selectedEmployeeName = employeeList.find(
@@ -248,8 +251,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       }
     } catch (err) {
       message.error("Something went wrong");
-    }
-    finally{
+    } finally {
       setExportAllEmployeeExcel(false);
     }
   };
@@ -382,31 +384,75 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       };
     }
   });
+
+  // const filteredData = formattedData.filter((item) => {
+  //     let match = true;
+
+  //   if (isSearchActive) {
+  //     return Object.values(item).some((value) => {
+  //       if (!value) return false;
+
+  //       const normalizedValue = value
+  //         .toString()
+  //         .toLowerCase()
+  //         .trim()
+  //         .replace(/\s+/g, "");
+  //       const normalizedSearch = searchText
+  //         .toLowerCase()
+  //         .trim()
+  //         .replace(/\s+/g, "");
+
+  //       return normalizedValue.includes(normalizedSearch);
+  //     });
+  //   } else {
+  //     return (
+  //       !selectedStatus ||
+  //       item.status?.toLowerCase().trim() ===
+  //         selectedStatus.toLowerCase().trim()
+  //     );
+  //   }
+  // });
+
   const filteredData = formattedData.filter((item) => {
+    let match = true;
+  
+    // Search logic
     if (isSearchActive) {
-      return Object.values(item).some((value) => {
+      match = Object.values(item).some((value) => {
         if (!value) return false;
-
-        const normalizedValue = value
-          .toString()
-          .toLowerCase()
-          .trim()
-          .replace(/\s+/g, "");
-        const normalizedSearch = searchText
-          .toLowerCase()
-          .trim()
-          .replace(/\s+/g, "");
-
+        const normalizedValue = value.toString().toLowerCase().replace(/\s+/g, "");
+        const normalizedSearch = searchText.toLowerCase().replace(/\s+/g, "");
         return normalizedValue.includes(normalizedSearch);
       });
     } else {
-      return (
+      match =
         !selectedStatus ||
-        item.status?.toLowerCase().trim() ===
-          selectedStatus.toLowerCase().trim()
-      );
+        item.status?.toLowerCase() === selectedStatus.toLowerCase();
     }
+  
+    // Date filtering logic
+    if (match && (startDateFilter || endDateFilter)) {
+      const taskStart = item.startDateTime !== "-" ? dayjs(item.startDateTime) : null;
+      const linkPosted = item.linkPostedDateTime && item.linkPostedDateTime !== "-"
+        ? dayjs(item.linkPostedDateTime)
+        : null;
+  
+      const isTaskStartInRange =
+        taskStart &&
+        (!startDateFilter || !taskStart.isBefore(startDateFilter, "day")) &&
+        (!endDateFilter || !taskStart.isAfter(endDateFilter, "day"));
+  
+      const isLinkPostedInRange =
+        linkPosted &&
+        (!startDateFilter || !linkPosted.isBefore(startDateFilter, "day")) &&
+        (!endDateFilter || !linkPosted.isAfter(endDateFilter, "day"));
+  
+      match = isTaskStartInRange || isLinkPostedInRange;
+    }
+  
+    return match;
   });
+  
 
   const sortedData = [...filteredData]
     .sort((a, b) => {
@@ -1878,49 +1924,52 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                 </div>
               )} */}
               {showLogout && (
-                              <div
-                                className="logout-popup"
-                                // onMouseLeave={() => setShowLogout(false)}
-                              >
-                                   
-                                <div className="logout-header">
-                                <FontAwesomeIcon icon={faCircleXmark} className="close-button" onClick={()=>setShowLogout(false)}/>
-              
-                                  <div className="header-content">
-                                    <UserOutlined
-                                      style={{
-                                        fontSize: "20px",
-                                        border: "2px solid",
-                                        borderRadius: "60%",
-                                        padding: "10px",
-                                      }}
-                                    />
-                                    <div className="text-group">
-                                      <div className="welcome-text">Welcome back</div>
-                                      <div className="user-name">{username}</div>
-                                    </div>
-                                  </div>
-                                </div>
-              
-                                  <div className="info-row mt-2">
-                                    <FontAwesomeIcon icon={faIdBadge} size="xl" />
-                                    <span className="ms-2">{employeeId}</span>
-                                  </div>
-                                  <div className="info-row">
-                                    <FontAwesomeIcon icon={faSuitcase} size="xl"/>{" "}
-                                    <span className="ms-2">{employeeDesignation}</span>
-                                  </div>
-                                  <div className="info-row">
-                                  <FontAwesomeIcon icon={faEnvelope} size="xl"/>
-                                    <span className="ms-2">{employeeMail}</span>
-                                  </div>
-              
-                                <div className="logout-action mt-3" onClick={handleLogout}>
-                                  <LogoutOutlined style={{ marginRight: "6px" }} />
-                                  <span>Logout</span>
-                                </div>
-                              </div>
-                            )}
+                <div
+                  className="logout-popup"
+                  // onMouseLeave={() => setShowLogout(false)}
+                >
+                  <div className="logout-header">
+                    <FontAwesomeIcon
+                      icon={faCircleXmark}
+                      className="close-button"
+                      onClick={() => setShowLogout(false)}
+                    />
+
+                    <div className="header-content">
+                      <UserOutlined
+                        style={{
+                          fontSize: "20px",
+                          border: "2px solid",
+                          borderRadius: "60%",
+                          padding: "10px",
+                        }}
+                      />
+                      <div className="text-group">
+                        <div className="welcome-text">Welcome back</div>
+                        <div className="user-name">{username}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="info-row mt-2">
+                    <FontAwesomeIcon icon={faIdBadge} size="xl" />
+                    <span className="ms-2">{employeeId}</span>
+                  </div>
+                  <div className="info-row">
+                    <FontAwesomeIcon icon={faSuitcase} size="xl" />{" "}
+                    <span className="ms-2">{employeeDesignation}</span>
+                  </div>
+                  <div className="info-row">
+                    <FontAwesomeIcon icon={faEnvelope} size="xl" />
+                    <span className="ms-2">{employeeMail}</span>
+                  </div>
+
+                  <div className="logout-action mt-3" onClick={handleLogout}>
+                    <LogoutOutlined style={{ marginRight: "6px" }} />
+                    <span>Logout</span>
+                  </div>
+                </div>
+              )}
             </div>
           </Container>
         </Navbar>
@@ -2016,9 +2065,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
 
           <div className="employee-performance-title-wrapper">
             <div className="employeeperformancediv">
-              <h3
-                className="employee-performance-title gradient-text"
-              >
+              <h3 className="employee-performance-title gradient-text">
                 {" "}
                 <UserOutlined style={{ color: "#5c258d" }} /> Employee
                 Performance{" "}
@@ -2029,8 +2076,9 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                 className="gradient-btn"
                 loading={exportAllEmployeeExcel}
               >
-               
-                {exportAllEmployeeExcel ? "Exporting..." : " Export all employee data to excel"}
+                {exportAllEmployeeExcel
+                  ? "Exporting..."
+                  : " Export all employee data to excel"}
               </Button>
             </div>
             <Row className="employee-performance-row mt-1">
@@ -2076,7 +2124,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                         {getInitials(emp.name)}
                       </Avatar>
                       <div className="employee-info">
-                      <strong>
+                        <strong>
                           {emp.name}-{emp.id}
                         </strong>
                         <div>
@@ -2107,7 +2155,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                         {getInitials(emp.name)}
                       </Avatar>
                       <div className="employee-info">
-                      <strong>
+                        <strong>
                           {emp.name}-{emp.id}
                         </strong>
                         <div>
@@ -2889,8 +2937,54 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                       // onChange={(e) => setSearchText(e.target.value)}
                       onChange={handleSearchChange}
                       disabled={selectedStatus !== null}
-                      style={{ width: 500 }}
+                      style={{ width: 400 }}
                     />
+                    <div>
+                      <DatePicker
+                        placeholder="Start Date"
+                        value={startDateFilter}
+                        onChange={(date) => {
+                          setStartDateFilter(date);
+                          setSearchText("");
+                          setIsSearchActive(false);
+                          setSelectedStatus(null);
+                          if (
+                            endDateFilter &&
+                            date &&
+                            date.isAfter(endDateFilter, "day") // Compare with day precision
+                          ) {
+                            message.error(
+                              "Start date cannot be after end date."
+                            );
+                          }
+                        }}
+                        disabled={isSearchActive || selectedStatus !== null}
+                        className="ms-2"
+                      />
+
+                      <DatePicker
+                        placeholder="End Date"
+                        value={endDateFilter}
+                        onChange={(date) => {
+                          setEndDateFilter(date);
+                          setSearchText("");
+                          setIsSearchActive(false);
+                          setSelectedStatus(null);
+                          if (
+                            startDateFilter &&
+                            date &&
+                            date.isBefore(startDateFilter, "day") // Compare with day precision
+                          ) {
+                            message.error(
+                              "End date cannot be before start date."
+                            );
+                          }
+                        }}
+                        style={{ marginRight: 16 }}
+                        disabled={isSearchActive || selectedStatus !== null}
+                        className="ms-2"
+                      />
+                    </div>
                   </div>
 
                   {/* Refresh Button */}
@@ -3545,12 +3639,12 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
                   {/* Centered Search Bar */}
                   <div className="flex-grow-1 d-flex justify-content-center">
                     <>
-                      <DatePicker.RangePicker
+                      {/* <DatePicker.RangePicker
                         format="YYYY-MM-DD"
                         onChange={(dates) => setDateRange(dates)}
                         allowClear
                         className="me-lg-5"
-                      />
+                      /> */}
                     </>
                   </div>
 

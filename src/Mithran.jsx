@@ -119,6 +119,8 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   const [isUpdateLoading, setIsUpdateLoading] = useState(false);
   const [showChart, setShowChart] = useState(true);
   const [dateRange, setDateRange] = useState([null, null]);
+  const [startDateFilter, setStartDateFilter] = useState(null);
+  const [endDateFilter, setEndDateFilter] = useState(null);
   const employeeDesignation = user?.designation;
   const employeeMail = user?.mailid;
   const getSocialMediaIcon = (type) => {
@@ -430,7 +432,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     startDateTime: item["Start Date & Time"]
       ? dayjs(item["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
       : "-",
-    endDateTime: item[" End Date & Time"]
+    endDateTime: item["End Date & Time"]
       ? dayjs(item[" End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
       : "-",
     duration:
@@ -479,9 +481,34 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     }
   };
 
+  // const filteredData = formattedData.filter((item) => {
+
+  //   if (isSearchActive) {
+  //     return Object.values(item).some((value) => {
+  //       if (!value) return false;
+
+  //       const normalizedValue = value
+  //         .toString()
+  //         .toLowerCase()
+  //         .replace(/\s+/g, ""); // Remove spaces
+  //       const normalizedSearch = searchText.toLowerCase().replace(/\s+/g, ""); // Remove spaces
+
+  //       return normalizedValue.includes(normalizedSearch);
+  //     });
+  //   } else {
+  //     return (
+  //       !selectedStatus ||
+  //       item.status?.toLowerCase() === selectedStatus.toLowerCase()
+  //     );
+  //   }
+  // });
+
   const filteredData = formattedData.filter((item) => {
+    let match = true;
+
+    // Search logic when search is active
     if (isSearchActive) {
-      return Object.values(item).some((value) => {
+      match = Object.values(item).some((value) => {
         if (!value) return false;
 
         const normalizedValue = value
@@ -493,12 +520,34 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
         return normalizedValue.includes(normalizedSearch);
       });
     } else {
-      return (
+      // If search is not active, check the selected status
+      match =
         !selectedStatus ||
-        item.status?.toLowerCase() === selectedStatus.toLowerCase()
-      );
+        item.status?.toLowerCase() === selectedStatus.toLowerCase();
     }
+
+    if (match && (startDateFilter || endDateFilter)) {
+      const taskStart = item.startDateTime !== "-" ? dayjs(item.startDateTime) : null;
+      const linkPosted = item.linkPostedDateTime !== "-" ? dayjs(item.linkPostedDateTime) : null;
+  
+      const isStartInRange =
+        taskStart &&
+        (!startDateFilter || !taskStart.isBefore(startDateFilter, "day")) &&
+        (!endDateFilter || !taskStart.isAfter(endDateFilter, "day"));
+  
+      const isLinkPostedInRange =
+        linkPosted &&
+        (!startDateFilter || !linkPosted.isBefore(startDateFilter, "day")) &&
+        (!endDateFilter || !linkPosted.isAfter(endDateFilter, "day"));
+  
+      // Only match if either the start date or the link posted date is in range
+      match = isStartInRange || isLinkPostedInRange;
+    }
+  
+
+    return match;
   });
+
   const sortedData = [...filteredData]
     .sort((a, b) => {
       const getValidDate = (item) => {
@@ -1957,8 +2006,54 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                         // onChange={(e) => setSearchText(e.target.value)}
                         onChange={handleSearchChange}
                         disabled={selectedStatus !== null}
-                        style={{ width: 500 }}
+                        style={{ width: 400 }}
                       />
+                      <div>
+                        <DatePicker
+                          placeholder="Start Date"
+                          value={startDateFilter}
+                          onChange={(date) => {
+                            setStartDateFilter(date);
+                            setSearchText("");
+                            setIsSearchActive(false);
+                            setSelectedStatus(null);
+                            if (
+                              endDateFilter &&
+                              date &&
+                              date.isAfter(endDateFilter, "day") // Compare with day precision
+                            ) {
+                              message.error(
+                                "Start date cannot be after end date."
+                              );
+                            }
+                          }}
+                          disabled={isSearchActive || selectedStatus !== null}
+                          className="ms-2"
+                        />
+
+                        <DatePicker
+                          placeholder="End Date"
+                          value={endDateFilter}
+                          onChange={(date) => {
+                            setEndDateFilter(date);
+                            setSearchText("");
+                            setIsSearchActive(false);
+                            setSelectedStatus(null);
+                            if (
+                              startDateFilter &&
+                              date &&
+                              date.isBefore(startDateFilter, "day") // Compare with day precision
+                            ) {
+                              message.error(
+                                "End date cannot be before start date."
+                              );
+                            }
+                          }}
+                          style={{ marginRight: 16 }}
+                          disabled={isSearchActive || selectedStatus !== null}
+                          className="ms-2"
+                        />
+                      </div>
                     </div>
 
                     {/* Refresh Button */}
@@ -2022,12 +2117,12 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                     {/* Centered Search Bar */}
                     <div className="flex-grow-1 d-flex justify-content-center">
                       <>
-                        <DatePicker.RangePicker
+                        {/* <DatePicker.RangePicker
                           format="YYYY-MM-DD"
                           onChange={(dates) => setDateRange(dates)}
                           allowClear
                           className="me-lg-5"
-                        />
+                        /> */}
                       </>
                     </div>
 
