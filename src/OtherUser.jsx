@@ -198,7 +198,7 @@ const OtherUser = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
 
       const text = await response.text();
@@ -311,7 +311,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec",
+        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -359,21 +359,30 @@ const OtherUser = ({ username, setUser, user }) => {
     } = values;
     // console.log("Values:", values);
     const formData = new URLSearchParams();
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     formData.append("action", "updateTask");
     formData.append("employeeId", user.employeeId);
     formData.append("rowIndex", rowIndex); // 🔑 critical value
     formData.append("clientName", clientName);
     formData.append("link", link || "");
     formData.append("details", details || "");
-    formData.append("startDateTime", startDateTime.toISOString());
-    formData.append("endDateTime", endDateTime.toISOString());
+    // formData.append("startDateTime", startDateTime.toISOString());
+    // formData.append("endDateTime", endDateTime.toISOString());
+    formData.append(
+      "startDateTime",
+      dayjs(startDateTime).tz(userTimeZone).format("YYYY-MM-DDTHH:mm:ss")
+    );
+    formData.append(
+      "endDateTime",
+      dayjs(endDateTime).tz(userTimeZone).format("YYYY-MM-DDTHH:mm:ss")
+    );
     formData.append("status", status);
     formData.append("assigned", assigned);
     formData.append("notes", notes || "");
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzWkfotQLkbLgFFNkNnJgJvWVVFXCAq6rH2wdMGCImKkk7kQbRRJm7cDhJqTh4A9jOxdg/exec",
+        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
