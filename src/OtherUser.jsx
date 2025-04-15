@@ -36,6 +36,7 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+
 import {
   UserOutlined,
   LogoutOutlined,
@@ -71,11 +72,13 @@ import {
 } from "react-bootstrap";
 import logo from "./Images/stratify-logo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import {
   faIdBadge,
   faSuitcase,
   faEnvelope,
-  faCircleXmark,
+  faXmarkCircle,
+  
 } from "@fortawesome/free-solid-svg-icons";
 import timezone from "dayjs/plugin/timezone";
 
@@ -226,7 +229,7 @@ const OtherUser = ({ username, setUser, user }) => {
           setTableData([]);
         }
 
-        console.log("Result", result);
+        // console.log("Result", result);
 
         // setTableData(result);
         if (isManualRefresh.current) {
@@ -289,7 +292,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     const formData = new URLSearchParams();
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    console.log("userTimeZone:", userTimeZone)
+    // console.log("userTimeZone:", userTimeZone)
     formData.append("action", "otherUserSubmit");
     formData.append("employeeId", user.employeeId);
     formData.append("clientName", clientName);
@@ -1154,6 +1157,10 @@ const OtherUser = ({ username, setUser, user }) => {
   font-size: 20px;
   cursor: pointer;
   color: #fffcfd;
+  transition: color 0.2s ease-in-out;
+}
+  .close-button:hover {
+  color: orange; 
 }
 
 .welcome-text {
@@ -1257,7 +1264,7 @@ const OtherUser = ({ username, setUser, user }) => {
                 >
                   <div className="logout-header">
                     <FontAwesomeIcon
-                      icon={faCircleXmark}
+                      icon={faXmarkCircle}
                       className="close-button"
                       onClick={() => setShowLogout(false)}
                     />
@@ -1291,7 +1298,7 @@ const OtherUser = ({ username, setUser, user }) => {
                     <span className="ms-2">{employeeMail}</span>
                   </div>
 
-                  <div className="logout-action mt-3" onClick={handleLogout}>
+                  <div className="logout-action mt-3 mb-2" onClick={handleLogout}>
                     <LogoutOutlined style={{ marginRight: "6px" }} />
                     <span>Logout</span>
                   </div>

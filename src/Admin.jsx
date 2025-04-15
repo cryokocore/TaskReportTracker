@@ -1263,8 +1263,12 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
   font-size: 20px;
   cursor: pointer;
   color: #fffcfd;
-}
+  transition: color 0.2s ease-in-out;
 
+}
+  .close-button:hover {
+  color: orange; 
+}
 .welcome-text {
   font-size: 12px;
   opacity: 0.9;
@@ -1974,7 +1978,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
                     <span className="ms-2">{employeeMail}</span>
                   </div>
 
-                  <div className="logout-action mt-3" onClick={handleLogout}>
+                  <div className="logout-action mt-3 mb-2" onClick={handleLogout}>
                     <LogoutOutlined style={{ marginRight: "6px" }} />
                     <span>Logout</span>
                   </div>
