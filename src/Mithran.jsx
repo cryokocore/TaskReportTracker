@@ -371,7 +371,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     // console.log("Values:", values);
     const formData = new URLSearchParams();
     formData.append("action", "st006UpdateTask");
-
     formData.append("rowIndex", rowIndex); // 🔑 critical value
     formData.append("workType", workType);
     formData.append("clientName", clientName);

@@ -289,6 +289,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     const formData = new URLSearchParams();
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log("userTimeZone:", userTimeZone)
     formData.append("action", "otherUserSubmit");
     formData.append("employeeId", user.employeeId);
     formData.append("clientName", clientName);
