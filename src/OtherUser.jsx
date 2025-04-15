@@ -70,6 +70,14 @@ import {
   Progress,
 } from "react-bootstrap";
 import logo from "./Images/stratify-logo.png";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faIdBadge,
+  faSuitcase,
+  faEnvelope,
+  faCircleXmark
+} from "@fortawesome/free-solid-svg-icons";
+
 const XIcon = () => (
   <svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -941,26 +949,7 @@ const OtherUser = ({ username, setUser, user }) => {
       position: relative;
     }
     
-    .logout-popup {
-      position: absolute;
-      top: 100%;
-      right: -10px;
-      background: white;
-      color: red;
-      padding: 5px;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-top: 5px;
-      margin-left: 100px !important;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 2px solid #f7f5f5;
-      height: auto;
-      }
+    
     
       .logout-action {
         display: flex;
@@ -1070,7 +1059,7 @@ const OtherUser = ({ username, setUser, user }) => {
     padding: 10px;
     border-radius: 0 0 8px 8px;
 }
-    .ant-modal .ant-modal-title {
+.ant-modal .ant-modal-title {
     margin: 0;
     color: rgba(0, 0, 0, 0.88);
     font-weight: bold;
@@ -1079,6 +1068,95 @@ const OtherUser = ({ username, setUser, user }) => {
     word-wrap: break-word;
     color: #1B75BC;
     }
+
+.logout-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+.logout-header {
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  color: white;
+  padding: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #fffcfd;
+}
+
+.welcome-text {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #333;
+  padding-left: 12px;
+  padding-top: 5px;
+  padding-right: 12px;
+}
+
+
+
+.logout-action {
+  display: flex;
+  justify-content: center;
+  color: red;
+  cursor: pointer;
+  margin: 10px 15px 5px;
+  padding: 6px;
+  border: 2px solid red;
+  border-radius: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.logout-action:hover {
+  background-color: red;
+  color: white;
+}
+  .header-content {
+  display: flex;
+  align-items: center;
+}
+
+.text-group {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+}
+
+.welcome-text {
+  font-size: 12px;
+  opacity: 0.9;
+  color: white;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 15px;
+  color: white;
+}
 
   `;
 
@@ -1118,49 +1196,42 @@ const OtherUser = ({ username, setUser, user }) => {
               {showLogout && (
                 <div
                   className="logout-popup"
-                  onMouseLeave={() => setShowLogout(false)}
+                  // onMouseLeave={() => setShowLogout(false)}
                 >
-                  <div
-                    style={{
-                      fontWeight: "500",
-                      marginBottom: "3px",
-                      color: "black",
-                    }}
-                    className="text-center"
-                  >
-                    <div>
+                     
+                  <div className="logout-header">
+                  <FontAwesomeIcon icon={faCircleXmark} className="close-button" onClick={()=>setShowLogout(false)}/>
+
+                    <div className="header-content">
                       <UserOutlined
-                        className="gradient-background text-white "
                         style={{
-                          border: "1px solid white",
-                          borderRadius: "40px",
-                          padding: "9px",
                           fontSize: "20px",
+                          border: "2px solid",
+                          borderRadius: "60%",
+                          padding: "10px",
                         }}
                       />
-                    </div>
-
-                    <div
-                      className="gradient-text mt-1"
-                      style={{ fontSize: "15px" }}
-                    >
-                      Hello, <br />
-                      {username}!<br />
-                      {employeeId}
-                      <br />
-                      {employeeDesignation}
-                      <br />
-                      {employeeMail}
+                      <div className="text-group">
+                        <div className="welcome-text">Welcome back</div>
+                        <div className="user-name">{username}</div>
+                      </div>
                     </div>
                   </div>
-                  <div
-                    style={{
-                      borderBottom: "2px solid #f0f0f0",
-                      width: "190px",
-                    }}
-                    className="mt-1"
-                  ></div>
-                  <div className="logout-action mt-2" onClick={handleLogout}>
+
+                    <div className="info-row mt-2">
+                      <FontAwesomeIcon icon={faIdBadge} size="xl" />
+                      <span className="ms-2">{employeeId}</span>
+                    </div>
+                    <div className="info-row">
+                      <FontAwesomeIcon icon={faSuitcase} size="xl"/>{" "}
+                      <span className="ms-2">{employeeDesignation}</span>
+                    </div>
+                    <div className="info-row">
+                    <FontAwesomeIcon icon={faEnvelope} size="xl"/>
+                      <span className="ms-2">{employeeMail}</span>
+                    </div>
+
+                  <div className="logout-action mt-3" onClick={handleLogout}>
                     <LogoutOutlined style={{ marginRight: "6px" }} />
                     <span>Logout</span>
                   </div>

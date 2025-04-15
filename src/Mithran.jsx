@@ -49,7 +49,7 @@ import {
   PauseCircleOutlined,
   DownloadOutlined,
   BarChartOutlined,
-  TableOutlined 
+  TableOutlined,
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -71,6 +71,13 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faIdBadge,
+  faSuitcase,
+  faEnvelope,
+  faCircleXmark,
+} from "@fortawesome/free-solid-svg-icons";
 
 import logo from "./Images/stratify-logo.png";
 const XIcon = () => (
@@ -221,7 +228,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   useEffect(() => {
     fetchData();
   }, []);
-  
+
   const handleManualRefresh = () => {
     isManualRefresh.current = true;
     setSelectedStatus(null); // Reset selection so all cards are visible
@@ -982,43 +989,93 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     }
     
     .logout-popup {
-      position: absolute;
-      top: 100%;
-      right: -10px;
-      background: white;
-      color: red;
-      padding: 5px;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-top: 10px;
-      margin-left: 100px !important;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 2px solid #f7f5f5;
-      height: auto
-    }
-    
-    .logout-action {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      color: red;
-      cursor: pointer;
-      padding: 4px 8px;
-      border: 2px solid red;
-      border-radius: 4px;
-      transition: background 0.2s ease, color 0.2s ease;
-      }
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+.logout-header {
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  color: white;
+  padding: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #fffcfd;
+}
+
+.welcome-text {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #333;
+  padding-left: 12px;
+  padding-top: 5px;
+  padding-right: 12px;
+}
+
+
+
+.logout-action {
+  display: flex;
+  justify-content: center;
+  color: red;
+  cursor: pointer;
+  margin: 10px 15px 5px;
+  padding: 6px;
+  border: 2px solid red;
+  border-radius: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
 
 .logout-action:hover {
   background-color: red;
   color: white;
 }
-    
+  .header-content {
+  display: flex;
+  align-items: center;
+}
+
+.text-group {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+}
+
+.welcome-text {
+  font-size: 12px;
+  opacity: 0.9;
+  color: white;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 15px;
+  color: white;
+}
+
     .stats-card {
       border-radius: 12px;
       transition: all 0.3s;
@@ -1166,7 +1223,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     const end =
       item.endDateTime && item.endDateTime !== "-"
         ? dayjs(item.endDateTime)
-        : start; 
+        : start;
 
     if (!start || !end) return;
 
@@ -1263,7 +1320,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                 {username?.slice(0, 2).toUpperCase()}
               </Avatar>
 
-              {showLogout && (
+              {/* {showLogout && (
                 <div
                   className="logout-popup"
                   onMouseLeave={() => setShowLogout(false)}
@@ -1306,6 +1363,53 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                     onClick={handleLogout}
                     style={{ fontSize: "16px" }}
                   >
+                    <LogoutOutlined style={{ marginRight: "6px" }} />
+                    <span>Logout</span>
+                  </div>
+                </div>
+              )} */}
+              {showLogout && (
+                <div
+                  className="logout-popup"
+                  // onMouseLeave={() => setShowLogout(false)}
+                >
+                  <div className="logout-header">
+                    <FontAwesomeIcon
+                      icon={faCircleXmark}
+                      className="close-button"
+                      onClick={() => setShowLogout(false)}
+                    />
+
+                    <div className="header-content">
+                      <UserOutlined
+                        style={{
+                          fontSize: "20px",
+                          border: "2px solid",
+                          borderRadius: "60%",
+                          padding: "10px",
+                        }}
+                      />
+                      <div className="text-group">
+                        <div className="welcome-text">Welcome back</div>
+                        <div className="user-name">{username}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="info-row mt-2">
+                    <FontAwesomeIcon icon={faIdBadge} size="xl" />
+                    <span className="ms-2">{employeeId}</span>
+                  </div>
+                  <div className="info-row">
+                    <FontAwesomeIcon icon={faSuitcase} size="xl" />{" "}
+                    <span className="ms-2">{employeeDesignation}</span>
+                  </div>
+                  <div className="info-row">
+                    <FontAwesomeIcon icon={faEnvelope} size="xl" />
+                    <span className="ms-2">{employeeMail}</span>
+                  </div>
+
+                  <div className="logout-action mt-3" onClick={handleLogout}>
                     <LogoutOutlined style={{ marginRight: "6px" }} />
                     <span>Logout</span>
                   </div>
@@ -1907,7 +2011,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                   <div className="d-flex align-items-center justify-content-center flex-wrap ">
                     {/* Icon and Title */}
                     <div className="d-flex align-items-center">
-                      <BarChartOutlined 
+                      <BarChartOutlined
                         style={{ fontSize: "24px", marginRight: "10px" }}
                       />
                       <span className="gradient-text">
