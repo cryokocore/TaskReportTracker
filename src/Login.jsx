@@ -33,7 +33,7 @@ const AuthForm = ({ setUser }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },

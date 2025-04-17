@@ -61,6 +61,8 @@ import {
   EditOutlined,
   BarChartOutlined,
   TableOutlined,
+  EyeOutlined,
+  OrderedListOutlined 
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -103,6 +105,7 @@ message.config({
 const OtherUser = ({ username, setUser, user }) => {
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [viewForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [dateTime, setDateTime] = useState(null);
   const [linkDateTime, setLinkDateTime] = useState(null);
@@ -133,6 +136,8 @@ const OtherUser = ({ username, setUser, user }) => {
   const [showChart, setShowChart] = useState(true);
   const [startDateFilter, setStartDateFilter] = useState(null);
   const [endDateFilter, setEndDateFilter] = useState(null);
+  const [viewingTask, setViewingTask] = useState(null);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const onFormChange = (changedValues, allValues) => {
     setEditingRecord((prev) => ({
       ...prev,
@@ -201,7 +206,7 @@ const OtherUser = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
 
       const text = await response.text();
@@ -316,7 +321,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -387,7 +392,7 @@ const OtherUser = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -828,9 +833,9 @@ const OtherUser = ({ username, setUser, user }) => {
     {
       title: "Action",
       key: "action",
-      width: 100,
+      width: 200,
       fixed: "right",
-      render: (_, record) => (
+      render: (_, record) => (<>
         <Button
           color="primary"
           variant="filled"
@@ -839,24 +844,48 @@ const OtherUser = ({ username, setUser, user }) => {
           <EditOutlined />
           Edit
         </Button>
+
+        <Button
+        color="purple"
+        variant="filled"
+        onClick={() => handleView(record, record.rowIndex)}
+        className="ms-1"
+      >
+        <EyeOutlined />
+        View
+      </Button>
+        </>
+        
       ),
     },
   ];
 
   const handleEdit = (record, index) => {
     setEditingTask({ ...record, rowIndex: index });
-    // console.log("Record:", record);
-    // console.log("Index:", index);
-
     setIsModalVisible(true);
-
     editForm.setFieldsValue({
       ...record,
       startDateTime: dayjs(record.startDateTime),
       endDateTime: dayjs(record.endDateTime),
     });
   };
-
+  
+  const handleView = (record, index) => {
+    const data = {
+      ...record,
+      rowIndex: index,
+      startDateTime: dayjs(record.startDateTime),
+      endDateTime: dayjs(record.endDateTime),
+    };
+  
+    console.log("Viewing task:", data);
+  
+    setViewingTask(data);
+    viewForm.setFieldsValue(data); // make sure this happens after data is stable
+    setIsViewModalVisible(true);  // open modal last
+  };
+  
+  
   const getTaskStats = () => {
     if (!tableData || tableData.length === 0) {
       return {
@@ -1044,7 +1073,8 @@ const OtherUser = ({ username, setUser, user }) => {
     
     .stats-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+      box-shadow: 0 12px 24px rgba(0,0,0,25%);
+      border: 1px solid #f0f0f09e;
     }
     
     .total-card {
@@ -1169,8 +1199,6 @@ const OtherUser = ({ username, setUser, user }) => {
   font-size: 12px;
   opacity: 0.9;
 }
-
-
 
 .info-row {
   display: flex;
@@ -1852,7 +1880,255 @@ const OtherUser = ({ username, setUser, user }) => {
                 )}
               </Card>
             </Col>
+            <Col xs={24}>
+              <Modal
+                title="View Task Data"
+                className="fw-bold"
+                open={isViewModalVisible}
+                onCancel={() => setIsViewModalVisible(false)}
+                footer={null}
+                width={1300}
+              >
+                <Form
+                  layout="vertical"
+                  form={viewForm}
+                  
+                  // onFinish={(values) => handleUpdate(values, user)}
+                >
+                  <Form.Item name="rowIndex" hidden>
+                    <Input />
+                  </Form.Item>
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <TeamOutlined /> Client/Task Name
+                          </span>
+                        }
+                        name="clientName"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter client name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter client name" size="large" />
+                      </Form.Item>
+                    </Col>
 
+                    <Col xs={24} md={12}>
+                      <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> Start Date & Time
+                              </span>
+                            }
+                            name="startDateTime"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select start date & time",
+                              },
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> End Date & Time
+                              </span>
+                            }
+                            name="endDateTime"
+                            dependencies={["startDateTime"]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select end date & time",
+                              },
+                              ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                  if (
+                                    !value ||
+                                    value.isAfter(
+                                      getFieldValue("startDateTime")
+                                    )
+                                  ) {
+                                    return Promise.resolve();
+                                  }
+                                  return Promise.reject(
+                                    new Error(
+                                      "End date must be after start date"
+                                    )
+                                  );
+                                },
+                              }),
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <InfoCircleOutlined /> Details
+                          </span>
+                        }
+                        name="details"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter task details",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter task details"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <LinkOutlined /> Link
+                          </span>
+                        }
+                        name="link"
+                      >
+                        <TextArea
+                          placeholder="Enter link (optional)"
+                          rows={1}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                             <ClockCircleOutlined /> Duration
+                          </span>
+                        }
+                        name="duration"
+                      >
+                        <Input
+                          rows={1}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                       <OrderedListOutlined /> Total Count
+                          </span>
+                        }
+                        name="totalCount"
+                      >
+                        <Input
+                          rows={1}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          { required: true, message: "Please select status" },
+                        ]}
+                      >
+                        <Select placeholder="Select status" size="large">
+                          <Select.Option value="Not Started">
+                            Not Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">Pending</Select.Option>
+                          <Select.Option value="Hold">Hold</Select.Option>
+                          <Select.Option value="Completed">
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+
+                    {/* Assigned By */}
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Assigned by
+                          </span>
+                        }
+                        name="assigned"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter assigner name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter name" size="large" />
+                      </Form.Item>
+                    </Col>
+
+                    {/* Notes */}
+                    <Col xs={24}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                      >
+                        <TextArea
+                          placeholder="Enter remarks"
+                          rows={2}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+                    
+                  </Row>
+                </Form>
+              </Modal>
+            </Col>
             <Col xs={24}>
               <Modal
                 title="Edit Task Data"
@@ -2090,6 +2366,8 @@ const OtherUser = ({ username, setUser, user }) => {
                 </Form>
               </Modal>
             </Col>
+
+         
           </Row>
         </Content>
       </Layout>

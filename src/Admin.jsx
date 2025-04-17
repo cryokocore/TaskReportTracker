@@ -147,7 +147,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec?mode=dropdown"
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?mode=dropdown"
       );
       const data = await response.json();
       // console.log("fetchEmployeeIds:", data);
@@ -167,7 +167,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeData(true);
       setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec?employeeId=${employeeId}`
+        `https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
       console.log("fetchEmployeeData:", data);
@@ -197,7 +197,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeAllData(true);
       // setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec?mode=allTasks`
+        `https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?mode=allTasks`
       );
       const data = await response.json();
       // console.log("fetchEmployeeAllData:", data);
@@ -241,7 +241,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
     setExportAllEmployeeExcel(true);
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: {
@@ -1343,7 +1343,8 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
     
     .stats-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+      box-shadow: 0 12px 24px rgba(0,0,0,30%);
+      border: 1px solid #f0f0f09e;
     }
     
     .total-card {
@@ -1606,7 +1607,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1681,7 +1682,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },

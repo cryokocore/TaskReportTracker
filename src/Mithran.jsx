@@ -50,6 +50,8 @@ import {
   DownloadOutlined,
   BarChartOutlined,
   TableOutlined,
+  EyeOutlined,
+  OrderedListOutlined 
 } from "@ant-design/icons";
 import {
   Button as BootstrapButton,
@@ -192,13 +194,13 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setRefreshing(true);
     try {
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
+        `https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?function=doOtherUserGet&employeeId=${user.employeeId}`
       );
       const text = await response.text();
 
       try {
         const result = JSON.parse(text);
-        // console.log("Result:", result);
+        console.log("Result:", result);
 
         if (
           result.success === false ||
@@ -318,7 +320,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -401,7 +403,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbzCyjS8XgOO-a1P4_gPSbeOrt3CP2cbskkxIdgZG4IE50OOfrBq0wrf-rfitzcYMD-5Ig/exec",
+        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -755,6 +757,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
   // };
 
   const handleEdit = (record, index) => {
+    console.log(record)
     setEditingTask({ ...record, rowIndex: index });
     // console.log("Record:", record);
     // console.log("Index:", index);
@@ -1145,7 +1148,9 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     
     .stats-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+      box-shadow: 0 12px 24px rgba(0,0,0,30%);
+      border: 1px solid #f0f0f09e;
+
     }
     
     .total-card {
