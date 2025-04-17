@@ -1534,6 +1534,8 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
     isManualRefresh.current = true;
     setSelectedStatus(null);
     setSearchText("");
+    setStartDateFilter(null);
+    setEndDateFilter(null);
     fetchEmployeeData(selectedEmployee);
     setTableKey((prev) => prev + 1);
   };
@@ -2943,16 +2945,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
 
                   {/* Centered Search Bar */}
                   <div className="flex-grow-1 d-flex justify-content-center">
-                    <Input
-                      placeholder="Search Tasks..."
-                      prefix={<SearchOutlined />}
-                      allowClear
-                      value={searchText}
-                      // onChange={(e) => setSearchText(e.target.value)}
-                      onChange={handleSearchChange}
-                      disabled={selectedStatus !== null}
-                      style={{ width: 400 }}
-                    />
+                 
                     <div>
                       <DatePicker
                         placeholder="Start Date"
@@ -2972,7 +2965,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
                             );
                           }
                         }}
-                        disabled={isSearchActive || selectedStatus !== null}
+                        // disabled={isSearchActive || selectedStatus !== null}
                         className="ms-2"
                       />
 
@@ -2995,10 +2988,20 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
                           }
                         }}
                         style={{ marginRight: 16 }}
-                        disabled={isSearchActive || selectedStatus !== null}
+                        // disabled={isSearchActive || selectedStatus !== null}
                         className="ms-2"
                       />
                     </div>
+                    <Input
+                      placeholder="Search Tasks..."
+                      prefix={<SearchOutlined />}
+                      allowClear
+                      value={searchText}
+                      // onChange={(e) => setSearchText(e.target.value)}
+                      onChange={handleSearchChange}
+                      disabled={selectedStatus !== null}
+                      style={{ width: 400 }}
+                    />
                   </div>
 
                   {/* Refresh Button */}

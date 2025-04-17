@@ -235,6 +235,8 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     isManualRefresh.current = true;
     setSelectedStatus(null); // Reset selection so all cards are visible
     setSearchText("");
+    setStartDateFilter(null);
+    setEndDateFilter(null);
     fetchData();
     setTableKey((prev) => prev + 1);
   };
@@ -2001,16 +2003,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
                     {/* Centered Search Bar */}
                     <div className="flex-grow-1 d-flex justify-content-center">
-                      <Input
-                        placeholder="Search Tasks..."
-                        prefix={<SearchOutlined />}
-                        allowClear
-                        value={searchText}
-                        // onChange={(e) => setSearchText(e.target.value)}
-                        onChange={handleSearchChange}
-                        disabled={selectedStatus !== null}
-                        style={{ width: 400 }}
-                      />
+                      
                       <div>
                         <DatePicker
                           placeholder="Start Date"
@@ -2030,7 +2023,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                               );
                             }
                           }}
-                          disabled={isSearchActive || selectedStatus !== null}
+                          // disabled={isSearchActive || selectedStatus !== null}
                           className="ms-2"
                         />
 
@@ -2053,10 +2046,20 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                             }
                           }}
                           style={{ marginRight: 16 }}
-                          disabled={isSearchActive || selectedStatus !== null}
+                          // disabled={isSearchActive || selectedStatus !== null}
                           className="ms-2"
                         />
                       </div>
+                      <Input
+                        placeholder="Search Tasks..."
+                        prefix={<SearchOutlined />}
+                        allowClear
+                        value={searchText}
+                        // onChange={(e) => setSearchText(e.target.value)}
+                        onChange={handleSearchChange}
+                        disabled={selectedStatus !== null}
+                        style={{ width: 400 }}
+                      />
                     </div>
 
                     {/* Refresh Button */}
