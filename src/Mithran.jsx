@@ -234,6 +234,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
 
   useEffect(() => {
     fetchData();
+    console.log(tableData);
   }, []);
 
   const handleManualRefresh = () => {
@@ -244,6 +245,8 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setEndDateFilter(null);
     fetchData();
     setTableKey((prev) => prev + 1);
+    console.log(tableData);
+
   };
   const handleSubmit = async (values) => {
     setLoading(true);
@@ -439,7 +442,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       ? dayjs(item["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
       : "-",
     endDateTime: item["End Date & Time"]
-      ? dayjs(item[" End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
+      ? dayjs(item["End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
       : "-",
     duration:
       item["Duration"] && item["Duration"] !== "1899-12-29T18:38:53.000Z"
@@ -559,6 +562,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
       const getValidDate = (item) => {
         const linkDate = item.linkPostedDateTime;
         const startDate = item.startDateTime;
+        
 
         // Use linkPostedDateTime if valid, else fallback to startDateTime
         const dateToUse = linkDate && linkDate !== "-" ? linkDate : startDate;

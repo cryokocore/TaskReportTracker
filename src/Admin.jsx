@@ -362,7 +362,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
           ? dayjs(item["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
           : "-",
         endDateTime: item["End Date & Time"]
-          ? dayjs(item[" End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
+          ? dayjs(item["End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
           : "-",
         duration:
           item["Duration"] && item["Duration"] !== "1899-12-29T18:38:53.000Z"
