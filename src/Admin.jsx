@@ -48,6 +48,8 @@ import {
   DeleteOutlined,
   TableOutlined,
   BarChartOutlined,
+  EyeOutlined,
+  OrderedListOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "./App.css";
@@ -87,6 +89,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const [employeeIds, setEmployeeIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [otherViewForm] = Form.useForm();
   const [otherEditingTask, setOtherEditingTask] = useState(null);
   const [isOtherModalVisible, setIsOtherModalVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -127,6 +130,11 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const [endDateFilter, setEndDateFilter] = useState(null);
   const employeeDesignation = user?.designation;
   const employeeMail = user?.mailid;
+  const [otherViewingTask, setOtherViewingTask] = useState(null);
+  const [isOtherViewModalVisible, setIsOtherViewModalVisible] = useState(false);
+  const [viewingTask, setViewingTask] = useState(null);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+  const [viewForm] = Form.useForm();
   const selectedEmployeeName = employeeList.find(
     (emp) => emp.id === selectedEmployee
   )?.name;
@@ -137,7 +145,6 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const [endDateTime, setEndDateTime] = useState(null);
   useEffect(() => {
     fetchEmployeeIds();
-
   }, []);
 
   useEffect(() => {
@@ -147,7 +154,7 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   const fetchEmployeeIds = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?mode=dropdown"
+        "https://script.google.com/macros/s/AKfycbwp5orEoK-YK-iBdeBFoE7KalnVtl99dn-amQtc2durFc2umCPHhuN1RIZtHjy7tLFsLw/exec?mode=dropdown"
       );
       const data = await response.json();
       // console.log("fetchEmployeeIds:", data);
@@ -167,11 +174,11 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeData(true);
       setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?employeeId=${employeeId}`
+        `https://script.google.com/macros/s/AKfycbwp5orEoK-YK-iBdeBFoE7KalnVtl99dn-amQtc2durFc2umCPHhuN1RIZtHjy7tLFsLw/exec?employeeId=${employeeId}`
       );
       const data = await response.json();
-      console.log("fetchEmployeeData:", data);
-      console.log("Employee Id", employeeId);
+      // console.log("fetchEmployeeData:", data);
+      // console.log("Employee Id", employeeId);
       if (Array.isArray(data.tasks)) {
         setEmployeeData(data.tasks);
         if (isManualRefresh.current) {
@@ -197,13 +204,13 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
       setLoadingEmployeeAllData(true);
       // setSelectedEmployee(employeeId);
       const response = await fetch(
-        `https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec?mode=allTasks`
+        `https://script.google.com/macros/s/AKfycbwp5orEoK-YK-iBdeBFoE7KalnVtl99dn-amQtc2durFc2umCPHhuN1RIZtHjy7tLFsLw/exec?mode=allTasks`
       );
       const data = await response.json();
       // console.log("fetchEmployeeAllData:", data);
       if (Array.isArray(data)) {
         setEmployeeAllData(data);
-        console.log(data);
+        // console.log(data);
         if (isManualRefresh.current) {
           message.success("Table data updated successfully.");
           isManualRefresh.current = false;
@@ -228,20 +235,19 @@ const Admin = ({ username, setUser, user, designation, mailid }) => {
   //     .toUpperCase();
   // };
 
-const sortedEmployeeList = [...employeeList].sort((a, b) =>
-  a.id.localeCompare(b.id)
-);
+  const sortedEmployeeList = [...employeeList].sort((a, b) =>
+    a.id.localeCompare(b.id)
+  );
 
-const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
-  a.id.localeCompare(b.id)
-);
-  
+  const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
+    a.id.localeCompare(b.id)
+  );
 
   const ExportExcelAllUser = async () => {
     setExportAllEmployeeExcel(true);
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
+        "https://script.google.com/macros/s/AKfycbwp5orEoK-YK-iBdeBFoE7KalnVtl99dn-amQtc2durFc2umCPHhuN1RIZtHjy7tLFsLw/exec",
         {
           method: "POST",
           headers: {
@@ -355,7 +361,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
         startDateTime: item["Start Date & Time"]
           ? dayjs(item["Start Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
           : "-",
-        endDateTime: item[" End Date & Time"]
+        endDateTime: item["End Date & Time"]
           ? dayjs(item[" End Date & Time"]).format("YYYY-MM-DD HH:mm:ss")
           : "-",
         duration:
@@ -425,12 +431,15 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
 
   const filteredData = formattedData.filter((item) => {
     let match = true;
-  
+
     // Search logic
     if (isSearchActive) {
       match = Object.values(item).some((value) => {
         if (!value) return false;
-        const normalizedValue = value.toString().toLowerCase().replace(/\s+/g, "");
+        const normalizedValue = value
+          .toString()
+          .toLowerCase()
+          .replace(/\s+/g, "");
         const normalizedSearch = searchText.toLowerCase().replace(/\s+/g, "");
         return normalizedValue.includes(normalizedSearch);
       });
@@ -439,30 +448,31 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
         !selectedStatus ||
         item.status?.toLowerCase() === selectedStatus.toLowerCase();
     }
-  
+
     // Date filtering logic
     if (match && (startDateFilter || endDateFilter)) {
-      const taskStart = item.startDateTime !== "-" ? dayjs(item.startDateTime) : null;
-      const linkPosted = item.linkPostedDateTime && item.linkPostedDateTime !== "-"
-        ? dayjs(item.linkPostedDateTime)
-        : null;
-  
+      const taskStart =
+        item.startDateTime !== "-" ? dayjs(item.startDateTime) : null;
+      const linkPosted =
+        item.linkPostedDateTime && item.linkPostedDateTime !== "-"
+          ? dayjs(item.linkPostedDateTime)
+          : null;
+
       const isTaskStartInRange =
         taskStart &&
         (!startDateFilter || !taskStart.isBefore(startDateFilter, "day")) &&
         (!endDateFilter || !taskStart.isAfter(endDateFilter, "day"));
-  
+
       const isLinkPostedInRange =
         linkPosted &&
         (!startDateFilter || !linkPosted.isBefore(startDateFilter, "day")) &&
         (!endDateFilter || !linkPosted.isAfter(endDateFilter, "day"));
-  
+
       match = isTaskStartInRange || isLinkPostedInRange;
     }
-  
+
     return match;
   });
-  
 
   const sortedData = [...filteredData]
     .sort((a, b) => {
@@ -680,6 +690,26 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
         //       </>
         //     ),
         //   },
+
+        {
+          title: "Action",
+          key: "action",
+          width: 90,
+          fixed: "right",
+          render: (_, record) => (
+            <>
+              <Button
+                color="purple"
+                variant="filled"
+                onClick={() => handleView(record, record.rowIndex)}
+             
+              >
+                <EyeOutlined />
+                View
+              </Button>
+            </>
+          ),
+        },
       ];
     } else {
       return [
@@ -795,9 +825,84 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
         //     </Button>
         //   ),
         // },
+
+        {
+          title: "Action",
+          key: "action",
+          width: 90,
+          fixed: "right",
+          render: (_, record) => (
+            <>
+              <Button
+                color="purple"
+                variant="filled"
+                onClick={() => handleOtherView(record, record.rowIndex)}
+              >
+                <EyeOutlined />
+                View
+              </Button>
+            </>
+          ),
+        },
       ];
     }
   };
+
+  const handleView = (record, index) => {
+    // console.log("Viewing task:", record);
+
+    // Prepare values
+    const startDate =
+      record.startDateTime && record.startDateTime !== "-"
+        ? dayjs(record.startDateTime)
+        : null;
+    const endDate =
+      record.endDateTime && record.endDateTime !== "-"
+        ? dayjs(record.endDateTime)
+        : null;
+    const linkPostedDateTime =
+      record.linkPostedDateTime && record.linkPostedDateTime !== "-"
+        ? dayjs(record.linkPostedDateTime)
+        : null;
+
+    // console.log(dateTime);
+
+    // Set full record + index
+    setViewingTask({ ...record, rowIndex: index });
+
+    // Fill view form
+    viewForm.setFieldsValue({
+      ...record,
+      startDateTime: startDate,
+      endDateTime: endDate,
+      dateTime: linkPostedDateTime,
+    });
+
+    // Optional state setters (if you're using them in the modal)
+    setWorkType(record.workType || null);
+    setLinkDateTime(dateTime || null);
+    setStartDateTime(startDate);
+    setEndDateTime(endDate);
+    // console.log(linkDateTime);
+    // Show modal
+    setIsViewModalVisible(true);
+  };
+
+  const handleOtherView = (record, index) => {
+    const data = {
+      ...record,
+      rowIndex: index,
+      startDateTime: dayjs(record.startDateTime),
+      endDateTime: dayjs(record.endDateTime),
+    };
+
+    // console.log("Viewing task:", data);
+
+    setOtherViewingTask(data);
+    otherViewForm.setFieldsValue(data);
+    setIsOtherViewModalVisible(true);
+  };
+
   const handleWorkTypeChange = (value) => {
     setWorkType(value);
     form.setFieldsValue({
@@ -1607,7 +1712,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
+        "https://script.google.com/macros/s/AKfycbwp5orEoK-YK-iBdeBFoE7KalnVtl99dn-amQtc2durFc2umCPHhuN1RIZtHjy7tLFsLw/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1682,7 +1787,7 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
 
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbwjpkJ2RneAIR8FL7iZzxlqC6tG4iGOxV4yzgj_MBmuOYPQe8RDuLvSDtqiqeMTAIJJzA/exec",
+        "https://script.google.com/macros/s/AKfycbwp5orEoK-YK-iBdeBFoE7KalnVtl99dn-amQtc2durFc2umCPHhuN1RIZtHjy7tLFsLw/exec",
         {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1981,7 +2086,10 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
                     <span className="ms-2">{employeeMail}</span>
                   </div>
 
-                  <div className="logout-action mt-3 mb-2" onClick={handleLogout}>
+                  <div
+                    className="logout-action mt-3 mb-2"
+                    onClick={handleLogout}
+                  >
                     <LogoutOutlined style={{ marginRight: "6px" }} />
                     <span>Logout</span>
                   </div>
@@ -2946,7 +3054,6 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
 
                   {/* Centered Search Bar */}
                   <div className="flex-grow-1 d-flex justify-content-center">
-                 
                     <div>
                       <DatePicker
                         placeholder="Start Date"
@@ -3638,6 +3745,582 @@ const sortedEmployeeData = [...employeeAllData].sort((a, b) =>
                 </Form>
               </Modal> */}
           </Col>
+
+          <Col xs={24}>
+            <Modal
+              title="View Task Data"
+              className="fw-bold"
+              open={isOtherViewModalVisible}
+              onCancel={() => setIsOtherViewModalVisible(false)}
+              footer={null}
+              width={1300}
+            >
+              <Form
+                layout="vertical"
+                form={otherViewForm}
+
+                // onFinish={(values) => handleUpdate(values, user)}
+              >
+                <Form.Item name="rowIndex" hidden>
+                  <Input />
+                </Form.Item>
+                <Row gutter={16}>
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <TeamOutlined /> Client/Task Name
+                        </span>
+                      }
+                      name="clientName"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter client name",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter client name" size="large" />
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <Row gutter={16}>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <span>
+                              <CalendarOutlined /> Start Date & Time
+                            </span>
+                          }
+                          name="startDateTime"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please select start date & time",
+                            },
+                          ]}
+                        >
+                          <DatePicker
+                            showTime
+                            style={{ width: "100%" }}
+                            size="large"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={
+                            <span>
+                              <CalendarOutlined /> End Date & Time
+                            </span>
+                          }
+                          name="endDateTime"
+                          dependencies={["startDateTime"]}
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please select end date & time",
+                            },
+                            ({ getFieldValue }) => ({
+                              validator(_, value) {
+                                if (
+                                  !value ||
+                                  value.isAfter(getFieldValue("startDateTime"))
+                                ) {
+                                  return Promise.resolve();
+                                }
+                                return Promise.reject(
+                                  new Error("End date must be after start date")
+                                );
+                              },
+                            }),
+                          ]}
+                        >
+                          <DatePicker
+                            showTime
+                            style={{ width: "100%" }}
+                            size="large"
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <InfoCircleOutlined /> Details
+                        </span>
+                      }
+                      name="details"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter task details",
+                        },
+                      ]}
+                    >
+                      <TextArea
+                        placeholder="Enter task details"
+                        rows={3}
+                        size="large"
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <LinkOutlined /> Link
+                        </span>
+                      }
+                      name="link"
+                    >
+                      <TextArea
+                        placeholder="Enter link (optional)"
+                        rows={1}
+                        size="large"
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <ClockCircleOutlined /> Duration
+                        </span>
+                      }
+                      name="duration"
+                    >
+                      <Input rows={1} size="large" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <OrderedListOutlined /> Total Count
+                        </span>
+                      }
+                      name="totalCount"
+                    >
+                      <Input rows={1} size="large" />
+                    </Form.Item>
+                  </Col>
+
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <ClockCircleOutlined /> Status
+                        </span>
+                      }
+                      name="status"
+                      rules={[
+                        { required: true, message: "Please select status" },
+                      ]}
+                    >
+                      <Select placeholder="Select status" size="large">
+                        <Select.Option value="Not Started">
+                          Not Started
+                        </Select.Option>
+                        <Select.Option value="Work in Progress">
+                          Work in Progress
+                        </Select.Option>
+                        <Select.Option value="Under Review">
+                          Under Review
+                        </Select.Option>
+                        <Select.Option value="Pending">Pending</Select.Option>
+                        <Select.Option value="Hold">Hold</Select.Option>
+                        <Select.Option value="Completed">
+                          Completed
+                        </Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+
+                  {/* Assigned By */}
+                  <Col xs={24} md={12}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <FormOutlined /> Assigned by
+                        </span>
+                      }
+                      name="assigned"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter assigner name",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter name" size="large" />
+                    </Form.Item>
+                  </Col>
+
+                  {/* Notes */}
+                  <Col xs={24}>
+                    <Form.Item
+                      label={
+                        <span>
+                          <FormOutlined /> Notes/Remarks
+                        </span>
+                      }
+                      name="notes"
+                    >
+                      <TextArea
+                        placeholder="Enter remarks"
+                        rows={2}
+                        size="large"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form>
+            </Modal>
+          </Col>
+
+          <Col xs={24}>
+              <Modal
+                title="View Task Data"
+                className="fw-bold"
+                open={isViewModalVisible}
+                onCancel={() => setIsViewModalVisible(false)}
+                footer={null}
+                width={1200}
+              >
+                <Form
+                  layout="vertical"
+                  form={viewForm}
+                  // onFinish={(values) => handleUpdate(values, user)}
+                >
+                  <Form.Item name="rowIndex" hidden>
+                    <Input />
+                  </Form.Item>
+                  <Row gutter={16}>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <TeamOutlined /> Client Name
+                          </span>
+                        }
+                        name="clientName"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter client name",
+                          },
+                        ]}
+                      >
+                        <Input placeholder="Enter client name" size="large" />
+                      </Form.Item>
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Work Type
+                          </span>
+                        }
+                        name="workType"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select your work type",
+                          },
+                        ]}
+                      >
+                        <Select
+                          placeholder="Select work type"
+                          onChange={handleWorkTypeChange}
+                          size="large"
+                        >
+                          <Select.Option value="Social Media">
+                            Social Media
+                          </Select.Option>
+                          <Select.Option value="Other">Other</Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+
+                    {workType === "Social Media" ? (
+                      <>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <FormOutlined /> Social Media Type
+                              </span>
+                            }
+                            name="socialMediaType"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select social media type",
+                              },
+                            ]}
+                          >
+                            <Select
+                              placeholder="Select social media type"
+                              size="large"
+                            >
+                              <Select.Option value="Facebook">
+                                <FacebookOutlined /> Facebook
+                              </Select.Option>
+                              <Select.Option value="Instagram">
+                                <InstagramOutlined /> Instagram
+                              </Select.Option>
+                              <Select.Option value="LinkedIn">
+                                <LinkedinOutlined /> LinkedIn
+                              </Select.Option>
+                              <Select.Option value="X">
+                                <XOutlined /> X
+                              </Select.Option>
+                              <Select.Option value="YouTube">
+                                <YoutubeOutlined /> YouTube
+                              </Select.Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <LinkOutlined /> Link
+                              </span>
+                            }
+                            name="link"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter the link",
+                              },
+                            ]}
+                          >
+                            <TextArea
+                              placeholder="Enter the link"
+                              onChange={handleLinkChange}
+                              rows={1}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> Date & Time
+                              </span>
+                            }
+                            name="dateTime"
+                          >
+                            <DatePicker
+                              showTime
+                              value={linkDateTime ? dayjs(linkDateTime) : null}
+                              disabled
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </>
+                    ) : (
+                      <>
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> Start Date & Time
+                              </span>
+                            }
+                            name="startDateTime"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select start date & time",
+                              },
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              value={startDateTime}
+                              onChange={(value) => setStartDateTime(value)}
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                          <Form.Item
+                            label={
+                              <span>
+                                <CalendarOutlined /> End Date & Time
+                              </span>
+                            }
+                            name="endDateTime"
+                            dependencies={["startDateTime"]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please select end date & time",
+                              },
+                              ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                  if (
+                                    !value ||
+                                    value.isAfter(
+                                      getFieldValue("startDateTime")
+                                    )
+                                  ) {
+                                    return Promise.resolve();
+                                  }
+                                  return Promise.reject(
+                                    new Error(
+                                      "End date & time must be after start date & time"
+                                    )
+                                  );
+                                },
+                              }),
+                            ]}
+                          >
+                            <DatePicker
+                              showTime
+                              value={endDateTime}
+                              onChange={(value) => setEndDateTime(value)}
+                              style={{ width: "100%" }}
+                              size="large"
+                            />
+                          </Form.Item>
+                        </Col>
+                      </>
+                    )}
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <InfoCircleOutlined /> Details
+                          </span>
+                        }
+                        name="details"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter the details",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the task details"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Notes/Remarks
+                          </span>
+                        }
+                        name="notes"
+                        rules={[
+                          {
+                            required: false,
+                            message: "Please enter the Notes/Remarks",
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          placeholder="Enter the notes/remarks"
+                          rows={3}
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <FormOutlined /> Assigned by
+                          </span>
+                        }
+                        name="assigned"
+                        rules={[
+                          {
+                            required: true,
+                            message:
+                              "Please enter the name of the task assigner",
+                          },
+                        ]}
+                      >
+                        <Input
+                          placeholder="Enter the name of the task assigner"
+                          size="large"
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        label={
+                          <span>
+                            <ClockCircleOutlined /> Status
+                          </span>
+                        }
+                        name="status"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select status of work",
+                          },
+                        ]}
+                      >
+                        <Select placeholder="Select status" size="large">
+                          <Select.Option value="Not Started">
+                            <ClockCircleOutlined style={{ color: "red" }} /> Not
+                            Started
+                          </Select.Option>
+                          <Select.Option value="Work in Progress">
+                            <ClockCircleOutlined style={{ color: "blue" }} />{" "}
+                            Work in Progress
+                          </Select.Option>
+                          <Select.Option value="Under Review">
+                            <InfoCircleOutlined style={{ color: "purple" }} />{" "}
+                            Under Review
+                          </Select.Option>
+                          <Select.Option value="Pending">
+                            <ClockCircleOutlined style={{ color: "orange" }} />{" "}
+                            Pending
+                          </Select.Option>
+                          <Select.Option value="Hold">
+                            <ClockCircleOutlined style={{ color: "gray" }} />{" "}
+                            Hold
+                          </Select.Option>
+                          <Select.Option value="Completed">
+                            <CheckCircleOutlined style={{ color: "green" }} />{" "}
+                            Completed
+                          </Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
+
+                  
+                  </Row>
+                </Form>
+              </Modal>
+            </Col>
+
           <Col xs={24} className="mt-4 mb-5">
             <Card
               title={
