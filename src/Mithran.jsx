@@ -187,7 +187,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setWorkType(value);
     form.setFieldsValue({
       link: value === "Social Media" ? "" : undefined,
-      socialMediaType: value === "Social Media" ? "" : undefined,
+      socialMediaType: value === "Social Media" ? [] : undefined,
       startDateTime: value !== "Social Media" ? "" : undefined,
       endDateTime: value !== "Social Media" ? "" : undefined,
     });
@@ -245,8 +245,6 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     setEndDateFilter(null);
     fetchData();
     setTableKey((prev) => prev + 1);
-    console.log(tableData);
-
   };
   const handleSubmit = async (values) => {
     setLoading(true);
@@ -389,8 +387,12 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
     formData.append("dateTime", formattedDateTime || "N/A");
 
     if (workType === "Social Media") {
-      formData.append("socialMediaType", socialMediaType);
-      formData.append("startDateTime", "");
+formData.append(
+  "socialMediaType",
+  Array.isArray(values.socialMediaType)
+    ? values.socialMediaType.join(",")
+    : ""
+);      formData.append("startDateTime", "");
       formData.append("endDateTime", "");
     } else {
       formData.append("socialMediaType", "");
@@ -794,9 +796,17 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
         record.linkPostedDateTime && record.linkPostedDateTime !== "-"
           ? dayjs(record.linkPostedDateTime)
           : null,
+            socialMediaType: record.socialMediaType
+    ? record.socialMediaType.split(',').map((item) => item.trim())
+    : [],
     });
     setWorkType(record.workType); // <-- IMPORTANT
-    setLinkDateTime(record.dateTime || null); // if you're using it
+    // setLinkDateTime(record.dateTime || null); 
+    setLinkDateTime(
+  record.linkPostedDateTime && record.linkPostedDateTime !== "-"
+    ? dayjs(record.linkPostedDateTime)
+    : null
+);
     setStartDateTime(record.startDateTime || null);
     setEndDateTime(record.endDateTime || null);
 
@@ -1610,6 +1620,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                           >
                             <Select
                               placeholder="Select social media type"
+                              mode="multiple"
                               size="large"
                             >
                               <Select.Option value="Facebook">
@@ -2358,6 +2369,7 @@ const MithranTaskTracker = ({ username, setUser, user }) => {
                             <Select
                               placeholder="Select social media type"
                               size="large"
+                              mode="multiple"
                             >
                               <Select.Option value="Facebook">
                                 <FacebookOutlined /> Facebook
